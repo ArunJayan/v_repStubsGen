@@ -8,8 +8,8 @@ class Enum:
 
     def declaration(self):
         getbase = lambda i: ' = %s' % self.base if i == 0 and self.base else ''
-        fieldlist = ',\n'.join('{}{}'.format(a, getbase(i)) for i, a in enumerate(self.fields))
-        return 'enum {}\n{{\n{}\n}};\n'.format(self.name, indent(fieldlist))
+        fieldlist = ['{}{}{}'.format(a, getbase(i), ',' if i < len(self.fields)-1 else '') for i, a in enumerate(self.fields)]
+        return 'enum {}\n{{\n{}\n}};\n\n'.format(self.name, indent(fieldlist))
 
     def definition(self):
         return ''
