@@ -10,6 +10,7 @@ from lxml import etree
 
 import sys
 import argparse
+import re
 
 X = []
 
@@ -36,12 +37,10 @@ X.append(Comment('This file is generated automatically! Do NOT edit!', in_defini
 X.append(Include('luaFunctionData.h', local=True))
 X.append(Include('v_repLib.h', local=True))
 X.append(Include('boost/assign/list_of.hpp'))
-X.append(Include('boost/assign/lexical_cast.hpp', in_declaration=False, in_definition=True))
-X.append(Include(args.hpp, local=True, in_declaration=False, in_definition=True))
+X.append(Include('boost/lexical_cast.hpp', in_declaration=False, in_definition=True))
+X.append(Include(args.hpp if args.hpp else re.sub(r'\.c(|xx|pp|c)$','.h',args.cpp), local=True, in_declaration=False, in_definition=True))
 
 registerFunc = Function('registerLuaStuff')
-X.append(registerFunc)
-
 registerFunc.body = ['std::vector<int> inArgs;']
 
 commandPrefix = 'simExt%s_' % pluginName
@@ -186,11 +185,11 @@ for fn in root.findall('script-function'):
 
     returns = fn.findall('return/param')
 
-    in_struct = Struct('%s_in' % cmdName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in params])
-    out_struct = Struct('%s_out' % cmdName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in returns])
+    in_struct = Struct('%s_in' % fnName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in params])
+    out_struct = Struct('%s_out' % fnName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in returns])
     X += [in_struct, out_struct]
 
-    outArgs = Variable('outArgs_%s[]' % cmdName, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(returns)] + ['%s, %d' % (vrep_type(p), p.attrib.get('minsize', 0)) for p in returns]))
+    outArgs = Variable('outArgs_%s[]' % fnName, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(returns)] + ['%s, %d' % (vrep_type(p), p.attrib.get('minsize', 0)) for p in returns]))
     X.append(outArgs)
 
     scriptId = Variable('scriptId', 'simInt')
@@ -239,6 +238,8 @@ for fn in root.findall('script-function'):
         'return ret;'
     ])
     X.append(f)
+
+X.append(registerFunc)
 
 if args.hpp:
     with open(args.hpp, 'w') as f:
