@@ -63,7 +63,7 @@ def vrep_type(param, subtype=False):
 
 def vrep_help_type(param):
     t = param.attrib['type'] 
-    if t == 'table': return 'table' + ('_%d' % param.attrib['minsize'] if 'minsize' in param.attrib else '')
+    if t == 'table': return 'table' + ('_%d' % int(param.attrib['minsize']) if 'minsize' in param.attrib else '')
     if t == 'int': return 'number'
     if t == 'float': return 'number'
     if t == 'string': return 'string'
@@ -146,7 +146,7 @@ for cmd in root.findall('command'):
     ])
     X.append(f4)
 
-    inArgs = Variable('inArgs_%s[]' % cmdName, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(params)] + ['%s, %d' % (vrep_type(p), p.attrib.get('minsize', 0)) for p in params]))
+    inArgs = Variable('inArgs_%s[]' % cmdName, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(params)] + ['%s, %d' % (vrep_type(p), int(p.attrib.get('minsize', 0))) for p in params]))
     X.append(inArgs)
 
     f = Function('LUA_%s_CALLBACK' % cmdName, args=[cb], body=[
@@ -189,7 +189,7 @@ for fn in root.findall('script-function'):
     out_struct = Struct('%s_out' % fnName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in returns])
     X += [in_struct, out_struct]
 
-    outArgs = Variable('outArgs_%s[]' % fnName, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(returns)] + ['%s, %d' % (vrep_type(p), p.attrib.get('minsize', 0)) for p in returns]))
+    outArgs = Variable('outArgs_%s[]' % fnName, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(returns)] + ['%s, %d' % (vrep_type(p), int(p.attrib.get('minsize', 0))) for p in returns]))
     X.append(outArgs)
 
     scriptId = Variable('scriptId', 'simInt')
