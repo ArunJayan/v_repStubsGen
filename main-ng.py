@@ -25,7 +25,7 @@ X.append(Include('boost/assign/list_of.hpp'))
 X.append(Include('boost/lexical_cast.hpp', in_declaration=False, in_definition=True))
 X.append(Include(args.hpp if args.hpp else re.sub(r'\.c(|xx|pp|c)$','.h',args.cpp), local=True, in_declaration=False, in_definition=True))
 
-registerFunc = Function('registerLuaStuff')
+registerFunc = Function('registerScriptStuff')
 registerFunc.body = ['std::vector<int> inArgs;']
 
 commandPrefix = 'simExt%s_' % plugin.name
@@ -36,7 +36,7 @@ for enum in plugin.enums:
     for item in enum.items:
         itemName = enum.item_prefix + item
         fields.append(itemName)
-        registerFunc.body.append('simRegisterCustomLuaVariable("{n}", (boost::lexical_cast<std::string>({n})).c_str());'.format(n=itemName))
+        registerFunc.body.append('simRegisterScriptVariable("{n}", (boost::lexical_cast<std::string>({n})).c_str());'.format(n=itemName))
         convCases.append('case {n}: return "{n}";'.format(n=itemName))
     convCases.append('default: return "???";')
     X.append(Enum(enum.name, fields, enum.base))
