@@ -7,7 +7,8 @@ class Struct:
 
     def declaration(self):
         fieldlist = ['{} {};'.format(a.ctype, a.name) for a in self.fields]
-        fieldlist += ['', '{}();'.format(self.name)]
+        if len(fieldlist) > 0: fieldlist += ['']
+        fieldlist += ['{}();'.format(self.name)]
         return 'struct {}\n{{\n{}\n}};\n\n'.format(self.name, indent(fieldlist))
 
     def definition(self):

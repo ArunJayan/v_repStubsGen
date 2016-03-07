@@ -43,8 +43,8 @@ for enum in plugin.enums:
     X.append(Function('%s_string' % enum.name.lower(), ret='const char*', args=[Variable('x', enum.name)], body=['switch(x)','{',convCases,'}']))
         
 for cmd in plugin.commands:
-    in_struct = Struct('%s_in' % cmd.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in cmd.params])
-    out_struct = Struct('%s_out' % cmd.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in cmd.returns])
+    in_struct = Struct('%s_in' % cmd.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in cmd.params if p.write_in])
+    out_struct = Struct('%s_out' % cmd.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in cmd.returns if p.write_out])
     X += [in_struct, out_struct]
 
     cb = Variable('p', 'SScriptCallBack *')
@@ -89,13 +89,13 @@ for cmd in plugin.commands:
             'std::vector<CScriptFunctionDataItem>* inData = D.getInDataPtr();', '{}_in in_args;'.format(cmd.name),
             '{}_out out_args;'.format(cmd.name)
         ] + [
-            'in_args.%s = inData->at(%d).%s;' % (p.name, i, p.lfda()) for i, p in enumerate(cmd.mandatory_params)
+            'in_args.%s = inData->at(%d).%s;' % (p.name, i, p.lfda()) for i, p in enumerate(cmd.mandatory_params) if p.write_in
         ] + [
-            'if(inData->size() > {j}) in_args.{name} = inData->at({j}).{lfda};'.format(j=len(cmd.mandatory_params)+i, name=p.name, lfda=p.lfda(), default=p.cdefault()) for i, p in enumerate(cmd.optional_params)
+            'if(inData->size() > {j}) in_args.{name} = inData->at({j}).{lfda};'.format(j=len(cmd.mandatory_params)+i, name=p.name, lfda=p.lfda(), default=p.cdefault()) for i, p in enumerate(cmd.optional_params) if p.write_in
         ] + [
             '{}(p, "{}", &in_args, &out_args);'.format(cmd.name, commandPrefix+cmd.name)
         ] + [
-            'D.pushOutData(CScriptFunctionDataItem(out_args.%s));' % p.name for p in cmd.returns
+            'D.pushOutData(CScriptFunctionDataItem(out_args.%s));' % p.name for p in cmd.returns if p.write_out
         ],
         '}',
         'D.writeDataToStack(p->stackID);'
@@ -109,8 +109,8 @@ for cmd in plugin.commands:
     ]
 
 for fn in plugin.script_functions:
-    in_struct = Struct('%s_in' % fn.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in fn.params])
-    out_struct = Struct('%s_out' % fn.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in fn.returns])
+    in_struct = Struct('%s_in' % fn.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in fn.params if p.write_in])
+    out_struct = Struct('%s_out' % fn.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in fn.returns if p.write_out])
     X += [in_struct, out_struct]
 
     outArgs = Variable('outArgs_%s[]' % fn.name, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(fn.returns)] + ['%s, %d' % (p.vtype(), getattr(p, 'minsize', 0)) for p in fn.returns]))
@@ -127,7 +127,7 @@ for fn in plugin.script_functions:
         'bool ret = false;',
         ''
     ] + [
-        'D.pushOutData_scriptFunctionCall(CScriptFunctionDataItem(in->%s));' % p.name for p in fn.params
+        'D.pushOutData_scriptFunctionCall(CScriptFunctionDataItem(in->%s));' % p.name for p in fn.params if p.write_in
     ] + [
         'D.writeDataToStack_scriptFunctionCall(stackID);'.format(fn.name),
         '',
@@ -139,7 +139,7 @@ for fn in plugin.script_functions:
             [
                 'std::vector<CScriptFunctionDataItem> *outData = D.getOutDataPtr_scriptFunctionCall();'
             ] + [
-                'out->%s = outData->at(%d).%s;' % (p.name, i, p.lfda()) for i, p in enumerate(fn.returns)
+                'out->%s = outData->at(%d).%s;' % (p.name, i, p.lfda()) for i, p in enumerate(fn.returns) if p.write_out
             ] + [
                 'ret = true;'
             ],
@@ -167,12 +167,21 @@ for fn in plugin.script_functions:
 
 X.append(registerFunc)
 
+def open_output(fn):
+    if fn == '-': return sys.stdout
+    else: return open(fn, 'w')
+
+def close_output(fn, h):
+    if fn != '-': h.close()
+
 if args.hpp:
-    with open(args.hpp, 'w') as f:
-        for x in X:
-            f.write(x.declaration())
+    f = open_output(args.hpp)
+    for x in X:
+        f.write(x.declaration())
+    close_output(args.hpp, f)
 
 if args.cpp:
-    with open(args.cpp, 'w') as f:
-        for x in X:
-            f.write(x.definition())
+    f = open_output(args.cpp)
+    for x in X:
+        f.write(x.definition())
+    close_output(args.cpp, f)
