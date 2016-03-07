@@ -147,8 +147,15 @@ for cmd in plugin.commands:
                 'for(int i = 0; i < sz; i++)',
                 '{',
                 [
+                    'if(simMoveStackItemToTop(p->stackID, simGetStackSize(p->stackID) - 2) == -1)',
+                    '{',
+                    [
+                        'simSetLastError(cmd, "error reading input argument %d move to stack top");' % (i + 1),
+                        'return;'
+                    ],
+                    '}',
                     'int j;',
-                    'if(!read__int(p->stackID, &j))'
+                    'if(!read__int(p->stackID, &j))',
                     '{',
                     [
                         'simSetLastError(cmd, "error reading input argument %d array item key");' % (i + 1),
@@ -379,8 +386,15 @@ for fn in plugin.script_functions:
                     'for(int i = 0; i < sz; i++)',
                     '{',
                     [
+                        'if(simMoveStackItemToTop(p->stackID, simGetStackSize(p->stackID) - 2) == -1)',
+                        '{',
+                        [
+                            'simSetLastError(cmd, "error reading input argument %d move to stack top");' % (i + 1),
+                            'return;'
+                        ],
+                        '}',
                         'int j;',
-                        'if(!read__int(p->stackID, &j))'
+                        'if(!read__int(p->stackID, &j))',
                         '{',
                         [
                             'simSetLastError(cmd, "error reading input argument %d array item key");' % (i + 1),
