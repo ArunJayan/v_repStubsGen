@@ -80,6 +80,10 @@ class ParamTable(Param):
         super(ParamTable, self).__init__(node)
         self.itype = node.attrib['item-type'] if 'item-type' in node.attrib else None
         self.minsize = int(node.attrib['minsize']) if 'minsize' in node.attrib else 0
+        self.maxsize = int(node.attrib['maxsize']) if 'maxsize' in node.attrib else 2147483647
+        if 'size' in node.attrib:
+            self.minsize = int(node.attrib['size'])
+            self.maxsize = int(node.attrib['size'])
         if self.itype is None:
             self.write_in = False
             self.write_out = False
@@ -93,6 +97,9 @@ class ParamTable(Param):
             return 'std::vector<%s>' % self.item_dummy().ctype()
         else:
             return 'void *'
+
+    def ctype_normalized(self):
+        return self.item_dummy().ctype().replace('::', '__')
 
     def vtype(self):
         return 'sim_script_arg_table' + ('|%s' % self.item_dummy().vtype() if self.itype is not None else '')
