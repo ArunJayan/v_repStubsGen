@@ -1,12 +1,6 @@
-from comment import *
-from enum import *
-from function import *
-from include import *
-from struct import *
-from utils import *
-from variable import *
-
-from lxml import etree
+from codegen import *
+from parse import parse
+import model
 
 import sys
 import argparse
@@ -21,232 +15,467 @@ parser.add_argument('--cpp', '-C', type=str, default='',
                    help='the C++ source file to generate')
 parser.add_argument('--hpp', '-H', type=str, default='',
                    help='the C++ header file to generate')
+parser.add_argument('--include', '-I', type=str, default='',
+                   help='extra header file to include')
 args = parser.parse_args()
 
-tree = etree.parse(args.xml_file)
-root = tree.getroot()
-
-if root.tag != 'plugin':
-    print('malformed XML input')
-    sys.exit(2)
-
-pluginName = root.attrib['name']
-author = root.attrib['author']
+plugin = parse(args.xml_file)
 
 X.append(Comment('This file is generated automatically! Do NOT edit!', in_definition=True))
-X.append(Include('luaFunctionData.h', local=True))
 X.append(Include('v_repLib.h', local=True))
+if args.include:
+    X.append(Include(args.include, local=True))
 X.append(Include('boost/assign/list_of.hpp'))
 X.append(Include('boost/lexical_cast.hpp', in_declaration=False, in_definition=True))
 X.append(Include(args.hpp if args.hpp else re.sub(r'\.c(|xx|pp|c)$','.h',args.cpp), local=True, in_declaration=False, in_definition=True))
 
-registerFunc = Function('registerLuaStuff')
-registerFunc.body = ['std::vector<int> inArgs;']
+registerFunc = Function('registerScriptStuff', ret='bool', body=[])
 
-commandPrefix = 'simExt%s_' % pluginName
+commandPrefix = 'simExt%s_' % plugin.name
 
-def c_type(param, subtype=False):
-    t = param.attrib['item-type'] if subtype else param.attrib['type'] 
-    if t == 'table': return 'std::vector<%s>' % c_type(param, True)
-    if t == 'int': return 'int'
-    if t == 'float': return 'float'
-    if t == 'string': return 'std::string'
-    if t == 'bool': return 'bool'
-
-def vrep_type(param, subtype=False):
-    t = param.attrib['item-type'] if subtype else param.attrib['type'] 
-    if t == 'table': return 'sim_lua_arg_table|%s' % vrep_type(param, True)
-    if t == 'int': return 'sim_lua_arg_int'
-    if t == 'float': return 'sim_lua_arg_float'
-    if t == 'string': return 'sim_lua_arg_string'
-    if t == 'bool': return 'sim_lua_arg_bool'
-
-def vrep_help_type(param):
-    t = param.attrib['type'] 
-    if t == 'table': return 'table' + ('_%d' % int(param.attrib['minsize']) if 'minsize' in param.attrib else '')
-    if t == 'int': return 'number'
-    if t == 'float': return 'number'
-    if t == 'string': return 'string'
-    if t == 'bool': return 'bool'
-
-def lfda(param, subtype=False):
-    t = param.attrib['item-type'] if subtype else param.attrib['type'] 
-    suffix = '' if subtype else '[0]'
-    if t == 'table': return lfda(param, True)
-    if t == 'int': return 'intData' + suffix
-    if t == 'float': return 'floatData' + suffix
-    if t == 'string': return 'stringData' + suffix
-    if t == 'bool': return 'boolData' + suffix
-
-def c_defval(param):
-    if 'default' in param.attrib:
-        d = param.attrib['default']
-        if param.attrib['type'] == 'table':
-            d = 'boost::assign::list_of' + ''.join(map(lambda x: '(%s)' % x.strip(), d.strip()[1:-1].split(',')))
-        return d
-    else:
-        return None
-
-for enum in root.findall('enum'):
-    enumName = enum.attrib['name']
-    base = int(enum.attrib['base']) if 'base' in enum.attrib else None
-    prefix = enum.attrib['item-prefix'] if 'item-prefix' in enum.attrib else ''
+for enum in plugin.enums:
     fields = []
     convCases = []
-    for item in enum.findall('item'):
-        itemName = prefix + item.attrib['name']
+    for item in enum.items:
+        itemName = enum.item_prefix + item
         fields.append(itemName)
-        registerFunc.body.append('simRegisterCustomLuaVariable("{n}", (boost::lexical_cast<std::string>({n})).c_str());'.format(n=itemName))
+        registerFunc.body += [
+            '{',
+            [
+                'int ret = simRegisterScriptVariable("{n}", (boost::lexical_cast<std::string>({n})).c_str());'.format(n=itemName),
+                'if(ret == 0)',
+                '{',
+                [
+                    'std::cout << "Plugin \'{p}\': warning: replaced variable \'{n}\'" << std::endl;'.format(p=plugin.name, n=itemName)
+                ],
+                '}',
+                'if(ret == -1)',
+                '{',
+                [
+                    'std::cout << "Plugin \'{p}\': error: cannot register variable \'{n}\'" << std::endl;'.format(p=plugin.name, n=itemName),
+                    'return false;'
+                ],
+                '}',
+            ],
+            '}'
+        ]
         convCases.append('case {n}: return "{n}";'.format(n=itemName))
     convCases.append('default: return "???";')
-    X.append(Enum(enumName, fields, base))
-    X.append(Function('%s_string' % enumName.lower(), ret='const char*', args=[Variable('x', enumName)], body=['switch(x)','{',convCases,'}']))
+    X.append(Enum(enum.name, fields, enum.base))
+    X.append(Function('%s_string' % enum.name.lower(), ret='const char*', args=[Variable('x', enum.name)], body=['switch(x)','{',convCases,'}']))
         
-for cmd in root.findall('command'):
-    cmdName = cmd.attrib['name']
-
-    params = cmd.findall('params/param')
-    mandatory_params = [p for p in params if 'default' not in p.attrib]
-    optional_params = [p for p in params if 'default' in p.attrib]
-    params = mandatory_params + optional_params
-
-    returns = cmd.findall('return/param')
-
-    in_struct = Struct('%s_in' % cmdName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in params])
-    out_struct = Struct('%s_out' % cmdName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in returns])
+for cmd in plugin.commands:
+    in_struct = Struct('%s_in' % cmd.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in cmd.params if p.write_in])
+    out_struct = Struct('%s_out' % cmd.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in cmd.returns if p.write_out])
     X += [in_struct, out_struct]
 
-    cb = Variable('p', 'SLuaCallBack *')
-    cmd = Variable('cmd', 'const char *')
-    struct_in = Variable('in', '%s_in *' % cmdName)
-    struct_out = Variable('out', '%s_out *' % cmdName)
+    cb = Variable('p', 'SScriptCallBack *')
+    cmdstr = Variable('cmd', 'const char *')
+    struct_in = Variable('in', '%s_in *' % cmd.name)
+    struct_out = Variable('out', '%s_out *' % cmd.name)
 
-    f1 = Function(cmdName, args=[cb, struct_in, struct_out], body=['{}(p, "{}", in, out);'.format(cmdName, commandPrefix+cmdName)])
-    f2 = Function(cmdName, args=[cb, cmd, struct_in, struct_out])
+    f1 = Function(cmd.name, args=[cb, struct_in, struct_out], body=['{}(p, "{}", in, out);'.format(cmd.name, commandPrefix+cmd.name)])
+    f2 = Function(cmd.name, args=[cb, cmdstr, struct_in, struct_out])
     X += [f1, f2]
 
     if len(out_struct.fields) == 1:
-        f3 = Function(cmdName, ret=out_struct.fields[0].ctype, args=[cb]+in_struct.fields, body=[
-            '{}_in in_args;'.format(cmdName)
+        f3 = Function(cmd.name, ret=out_struct.fields[0].ctype, args=[cb]+in_struct.fields, body=[
+            '{}_in in_args;'.format(cmd.name)
         ] + [
             'in_args.{n} = {n};'.format(n=a.name) for a in in_struct.fields
         ] + [
-            '{}_out out_args;'.format(cmdName),
-            '{}(p, &in_args, &out_args);'.format(cmdName),
+            '{}_out out_args;'.format(cmd.name),
+            '{}(p, &in_args, &out_args);'.format(cmd.name),
             'return out_args.{};'.format(out_struct.fields[0].name)
         ])
         X.append(f3)
 
-    f4 = Function(cmdName, args=[cb, struct_out]+in_struct.fields, body=[
-        '{}_in in_args;'.format(cmdName)
+    f4 = Function(cmd.name, args=[cb, struct_out]+in_struct.fields, body=[
+        '{}_in in_args;'.format(cmd.name)
     ] + [
         'in_args.{n} = {n};'.format(n=a.name) for a in in_struct.fields
     ] + [
-        '{}(p, &in_args, out);'.format(cmdName)
+        '{}(p, &in_args, out);'.format(cmd.name)
     ])
     X.append(f4)
 
-    inArgs = Variable('inArgs_%s[]' % cmdName, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(params)] + ['%s, %d' % (vrep_type(p), int(p.attrib.get('minsize', 0))) for p in params]))
-    X.append(inArgs)
+    #inArgs = Variable('inArgs_%s[]' % cmd.name, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(cmd.params)] + ['%s, %d' % (p.vtype(), getattr(p, 'minsize', 0)) for p in cmd.params]))
+    #X.append(inArgs)
 
-    f = Function('LUA_%s_CALLBACK' % cmdName, args=[cb], body=[
-        'p->outputArgCount = 0;',
-        'CLuaFunctionData D;',
-        'if(D.readDataFromLua(p, inArgs_{}, {}, "{}"))'.format(cmdName, len(mandatory_params), commandPrefix+cmdName),
+    f = Function('%s_callback' % cmd.name, args=[cb], body=[
+        'const char *cmd = "{}";'.format(commandPrefix+cmd.name),
+        '',
+        '{}_in in_args;'.format(cmd.name),
+        '{}_out out_args;'.format(cmd.name),
+        '',
+        '// check argument count',
+        '',
+        'int numArgs = simGetStackSize(p->stackID);',
+        'if(numArgs < {} || numArgs > {})'.format(len(cmd.mandatory_params), len(cmd.params)),
         '{',
         [
-            'std::vector<CLuaFunctionDataItem>* inData = D.getInDataPtr();', '{}_in in_args;'.format(cmdName),
-            '{}_out out_args;'.format(cmdName)
-        ] + [
-            'in_args.%s = inData->at(%d).%s;' % (p.attrib['name'], i, lfda(p)) for i, p in enumerate(mandatory_params)
-        ] + [
-            'if(inData->size() > {j}) in_args.{name} = inData->at({j}).{lfda};'.format(j=len(mandatory_params)+i, name=p.attrib['name'], lfda=lfda(p), default=c_defval(p)) for i, p in enumerate(optional_params)
-        ] + [
-            '{}(p, "{}", &in_args, &out_args);'.format(cmdName, commandPrefix+cmdName)
-        ] + [
-            'D.pushOutData(CLuaFunctionDataItem(out_args.%s));' % p.attrib['name'] for p in returns
+            'simSetLastError(cmd, "wrong number of arguments");',
+            'return;'
         ],
         '}',
-        'D.writeDataToLua(p);'
-    ])
+        '',
+        '// read input arguments from stack',
+        ''
+    ] + unindent([
+        [
+            'if(numArgs >= {})'.format(i + 1),
+            '{',
+            [
+                'simMoveStackItemToTop(p->stackID, 0);',
+                'int i = simGetStackTableInfo(p->stackID, 0);',
+                'if(i < {})'.format(p.minsize),
+                '{',
+                [
+                    'simSetLastError(cmd, "error reading input argument %d: expected array");' % (i + 1),
+                    'return;'
+                ],
+                '}',
+                'int sz = simGetStackSize(p->stackID);',
+                'if(simUnfoldStackTable(p->stackID) == -1)',
+                '{',
+                [
+                    'simSetLastError(cmd, "error: unfold table failed ");',
+                    'return;'
+                ],
+                '}',
+                'sz = (simGetStackSize(p->stackID) - sz + 1) / 2;',
+                'for(int i = 0; i < sz; i++)',
+                '{',
+                [
+                    'if(simMoveStackItemToTop(p->stackID, simGetStackSize(p->stackID) - 2) == -1)',
+                    '{',
+                    [
+                        'simSetLastError(cmd, "error reading input argument %d move to stack top");' % (i + 1),
+                        'return;'
+                    ],
+                    '}',
+                    'int j;',
+                    'if(!read__int(p->stackID, &j))',
+                    '{',
+                    [
+                        'simSetLastError(cmd, "error reading input argument %d array item key");' % (i + 1),
+                        'return;'
+                    ],
+                    '}',
+                    '{ntype} v;'.format(ntype=p.ctype_normalized()),
+                    'if(!read__{ntype}(p->stackID, &v))'.format(ntype=p.ctype_normalized()),
+                    '{',
+                    [
+                        'simSetLastError(cmd, "error reading input argument %d array item value");' % (i + 1),
+                        'return;'
+                    ],
+                    '}',
+                    'in_args.{n}.push_back(v);'.format(n=p.name)
+                ],
+                '}',
+                'if(in_args.{n}.size() < {ms})'.format(n=p.name, ms=p.minsize),
+                '{',
+                [
+                    'simSetLastError(cmd, "argument %d array must have at least %d elements");' % (i + 1, p.minsize),
+                    'return;'
+                ],
+                '}',
+                'if(in_args.{n}.size() > {ms})'.format(n=p.name, ms=p.maxsize),
+                '{',
+                [
+                    'simSetLastError(cmd, "argument %d array must have at most %d elements");' % (i + 1, p.minsize),
+                    'return;'
+                ],
+                '}'
+            ],
+            '}',
+            ''
+        ]
+        if isinstance(p, model.ParamTable) else
+        [
+            'if(numArgs >= {})'.format(i + 1),
+            '{',
+            [
+                'simMoveStackItemToTop(p->stackID, 0);',
+                'if(!read__{ntype}(p->stackID, &(in_args.{n})))'.format(ntype=p.ctype_normalized(), n=p.name),
+                '{',
+                [
+                    'simSetLastError(cmd, "error reading input argument %d");' % (i + 1),
+                    'return;'
+                ],
+                '}'
+            ],
+            '}',
+            ''
+        ]
+        for i, p in enumerate(cmd.params) if p.write_in
+    ]) + ([
+        '// clear stack',
+        'simPopStackItem(p->stackID, 0);',
+        ''
+    ] if not any(p.skip for p in cmd.params) else []) + [
+        '{}(p, cmd, &in_args, &out_args);'.format(cmd.name),
+        '',
+        '// write output arguments to stack',
+        ''
+    ] + unindent([
+        [
+            'if(simPushTableOntoStack(p->stackID) == -1)',
+            '{',
+            [
+                'simSetLastError(cmd, "failed to write output argument %d push empty table onto stack");' % (i + 1),
+                'return;'
+            ],
+            '}',
+            'for(int i = 0; i < out_args.{n}.size(); i++)'.format(n=p.name),
+            '{',
+            [
+                'if(!write__int(i + 1, p->stackID))',
+                '{',
+                [
+                    'simSetLastError(cmd, "failed to write output argument %d array key");' % (i + 1),
+                    'return;'
+                ],
+                '}',
+                'if(!write__{ntype}(out_args.{n}[i], p->stackID))',
+                '{',
+                [
+                    'simSetLastError(cmd, "failed to write output argument %d array value");' % (i + 1),
+                    'return;'
+                ],
+                '}',
+                'if(simInsertDataIntoStackTable(p->stackID) == -1)',
+                '{',
+                [
+                    'simSetLastError(cmd, "failed to write output argument %d array");' % (i + 1),
+                    'return;'
+                ],
+                '}',
+            ],
+            '}'
+        ]
+        if isinstance(p, model.ParamTable) else
+        [
+            'if(!write__{ntype}(out_args.{n}, p->stackID))'.format(ntype=p.ctype_normalized(), n=p.name),
+            '{',
+            [
+                'simSetLastError(cmd, "error writing output argument %d");' % (i + 1),
+                'return;'
+            ],
+            '}',
+            ''
+        ]
+        for i, p in enumerate(cmd.returns) if p.write_out
+    ]))
     X.append(f)
 
-    help_out_args = ','.join('%s %s' % (vrep_help_type(p), p.attrib['name']) for p in returns)
-    help_in_args = ','.join('%s %s' % (vrep_help_type(p), p.attrib['name']) + ('=%s' % p.attrib['default'] if 'default' in p.attrib else '') for p in params)
+    help_out_args = ','.join('%s %s' % (p.htype(), p.name) for p in cmd.returns)
+    help_in_args = ','.join('%s %s' % (p.htype(), p.name) + ('=%s' % p.default if p.default is not None else '') for p in cmd.params)
     registerFunc.body += [
-        'CLuaFunctionData::getInputDataForFunctionRegistration(inArgs_{}, inArgs);'.format(cmdName),
-        'simRegisterCustomLuaFunction("{}", "{}={}({})", &inArgs[0], LUA_{}_CALLBACK);'.format(commandPrefix+cmdName, help_out_args, commandPrefix+cmdName, help_in_args, cmdName)
+        '{',
+        [
+            'int ret = simRegisterScriptCallbackFunction("{}@{}", "{}={}({})", {}_callback);'.format(commandPrefix+cmd.name, plugin.name, help_out_args, commandPrefix+cmd.name, help_in_args, cmd.name),
+            'if(ret == 0)',
+            '{',
+            [
+                'std::cout << "Plugin \'{p}\': warning: replaced function \'{n}\'" << std::endl;'.format(p=plugin.name, n=commandPrefix+cmd.name)
+            ],
+            '}',
+            'if(ret == -1)',
+            '{',
+            [
+                'std::cout << "Plugin \'{p}\': error: cannot register function \'{n}\'" << std::endl;'.format(p=plugin.name, n=commandPrefix+cmd.name),
+                'return false;'
+            ],
+            '}'
+        ],
+        '}'
     ]
 
-for fn in root.findall('script-function'):
-    fnName = fn.attrib['name']
-
-    params = fn.findall('params/param')
-
-    returns = fn.findall('return/param')
-
-    in_struct = Struct('%s_in' % fnName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in params])
-    out_struct = Struct('%s_out' % fnName, [Variable(p.attrib['name'], c_type(p), default=c_defval(p)) for p in returns])
+for fn in plugin.script_functions:
+    in_struct = Struct('%s_in' % fn.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in fn.params if p.write_in])
+    out_struct = Struct('%s_out' % fn.name, [Variable(p.name, p.ctype(), default=p.cdefault()) for p in fn.returns if p.write_out])
     X += [in_struct, out_struct]
 
-    outArgs = Variable('outArgs_%s[]' % fnName, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(returns)] + ['%s, %d' % (vrep_type(p), int(p.attrib.get('minsize', 0))) for p in returns]))
-    X.append(outArgs)
+    #outArgs = Variable('outArgs_%s[]' % fn.name, 'int', const=True, default='{%s}' % ', '.join(['%d' % len(fn.returns)] + ['%s, %d' % (p.vtype(), getattr(p, 'minsize', 0)) for p in fn.returns]))
+    #X.append(outArgs)
 
     scriptId = Variable('scriptId', 'simInt')
     func = Variable('func', 'const char *')
-    struct_in = Variable('in', '{}_in *'.format(fnName))
-    struct_out = Variable('out', '{}_out *'.format(fnName))
-    f = Function(fnName, ret='bool', args=[scriptId, func, struct_in, struct_out], body=[
-        'SLuaCallBack c;',
-        'CLuaFunctionData D;',
-        'bool ret = false;',
-        ''
-    ] + [
-        'D.pushOutData_luaFunctionCall(CLuaFunctionDataItem(in->%s));' % p.attrib['name'] for p in params
-    ] + [
-        'D.writeDataToLua_luaFunctionCall(&c, outArgs_{});'.format(fnName),
+    struct_in = Variable('in', '{}_in *'.format(fn.name))
+    struct_out = Variable('out', '{}_out *'.format(fn.name))
+    f = Function(fn.name, ret='bool', args=[scriptId, func, struct_in, struct_out], body=[
+        'int stackID = simCreateStack();',
+        'bool ret = true;',
         '',
-        'if(simCallScriptFunction(scriptId, func, &c, NULL) != -1)',
-        '{',
+        '// write input arguments to stack',
+        ''
+    ] + unindent([
         [
-            'if(D.readDataFromLua_luaFunctionCall(&c, outArgs_{n}, outArgs_{n}[0], func))'.format(n=fnName),
+            'if(simPushTableOntoStack(p->stackID) == -1)',
             '{',
             [
-                'std::vector<CLuaFunctionDataItem> *outData = D.getOutDataPtr_luaFunctionCall();'
-            ] + [
-                'out->%s = outData->at(%d).%s;' % (p.attrib['name'], i, lfda(p)) for i, p in enumerate(returns)
-            ] + [
-                'ret = true;'
+                'simSetLastError(cmd, "failed to write output argument %d push empty table onto stack");' % (i + 1),
+                'return;'
             ],
             '}',
-            'else',
+            'for(int i = 0; i < out_args.{n}.size(); i++)'.format(n=p.name),
             '{',
             [
-                'simSetLastError(func, "return value size and/or type is incorrect");'
+                'if(!write__int(i + 1, p->stackID))',
+                '{',
+                [
+                    'simSetLastError(cmd, "failed to write output argument %d array key");' % (i + 1),
+                    'return;'
+                ],
+                '}',
+                'if(!write__{ntype}(out_args.{n}[i], p->stackID))',
+                '{',
+                [
+                    'simSetLastError(cmd, "failed to write output argument %d array value");' % (i + 1),
+                    'return;'
+                ],
+                '}',
+                'if(simInsertDataIntoStackTable(p->stackID) == -1)',
+                '{',
+                [
+                    'simSetLastError(cmd, "failed to write output argument %d array");' % (i + 1),
+                    'return;'
+                ],
+                '}',
             ],
             '}'
+        ]
+        if isinstance(p, model.ParamTable) else
+        [
+            'if(!write__{ntype}(in->{n}, stackID))'.format(ntype=p.ctype_normalized(), n=p.name),
+            '{',
+            [
+                'return false;'
+            ],
+            '}'
+        ]
+        for i, p in enumerate(fn.params) if p.write_in
+    ]) + [
+        '',
+        'if(simCallScriptFunctionEx(scriptId, func, stackID) != -1)',
+        '{',
+        [
+            '// read output arguments from stack',
+            '',
+            unindent([
+                [
+                    'simMoveStackItemToTop(p->stackID, 0);',
+                    'int i = simGetStackTableInfo(p->stackID, 0);',
+                    'if(i < {})'.format(p.minsize),
+                    '{',
+                    [
+                        'simSetLastError(cmd, "error reading input argument %d: expected array");' % (i + 1),
+                        'return;'
+                    ],
+                    '}',
+                    'int sz = simGetStackSize(p->stackID);',
+                    'if(simUnfoldStackTable(p->stackID) == -1)',
+                    '{',
+                    [
+                        'simSetLastError(cmd, "error: unfold table failed ");',
+                        'return;'
+                    ],
+                    '}',
+                    'sz = (simGetStackSize(p->stackID) - sz + 1) / 2;',
+                    'for(int i = 0; i < sz; i++)',
+                    '{',
+                    [
+                        'if(simMoveStackItemToTop(p->stackID, simGetStackSize(p->stackID) - 2) == -1)',
+                        '{',
+                        [
+                            'simSetLastError(cmd, "error reading input argument %d move to stack top");' % (i + 1),
+                            'return;'
+                        ],
+                        '}',
+                        'int j;',
+                        'if(!read__int(p->stackID, &j))',
+                        '{',
+                        [
+                            'simSetLastError(cmd, "error reading input argument %d array item key");' % (i + 1),
+                            'return;'
+                        ],
+                        '}',
+                        '{ntype} v;'.format(ntype=p.ctype_normalized()),
+                        'if(!read__{ntype}(p->stackID, &v))'.format(ntype=p.ctype_normalized()),
+                        '{',
+                        [
+                            'simSetLastError(cmd, "error reading input argument %d array item value");' % (i + 1),
+                            'return;'
+                        ],
+                        '}',
+                        'in_args.{n}.push_back(v);'.format(n=p.name)
+                    ],
+                    '}',
+                    'if(in_args.{n}.size() < {ms})'.format(n=p.name, ms=p.minsize),
+                    '{',
+                    [
+                        'simSetLastError(cmd, "argument %d array must have at least %d elements");' % (i + 1, p.minsize),
+                        'return;'
+                    ],
+                    '}',
+                    'if(in_args.{n}.size() > {ms})'.format(n=p.name, ms=p.maxsize),
+                    '{',
+                    [
+                        'simSetLastError(cmd, "argument %d array must have at most %d elements");' % (i + 1, p.minsize),
+                        'return;'
+                    ],
+                    '}'
+                ]
+                if isinstance(p, model.ParamTable) else
+                [
+                    'if(!read__{ntype}(stackID, &(out->{n})))'.format(ntype=p.ctype_normalized(), n=p.name),
+                    '{',
+                    [
+                        'ret = false;'
+                    ],
+                    '}',
+                    ''
+                ]
+                for i, p in enumerate(fn.returns) if p.write_out
+            ])
         ],
         '}',
         'else',
         '{',
         [
-            'simSetLastError(func, "callback returned an error");'
+            'simSetLastError(func, "callback error");',
+            'ret = false;'
         ],
         '}',
         '',
-        'D.releaseBuffers_luaFunctionCall(&c);',
+        'simReleaseStack(stackID);',
         'return ret;'
     ])
     X.append(f)
 
+registerFunc.body.append('return true;')
 X.append(registerFunc)
 
+def open_output(fn):
+    if fn == '-': return sys.stdout
+    else: return open(fn, 'w')
+
+def close_output(fn, h):
+    if fn != '-': h.close()
+
 if args.hpp:
-    with open(args.hpp, 'w') as f:
-        for x in X:
-            f.write(x.declaration())
+    guard_name = re.sub('[^a-zA-Z0-9]', '_', args.hpp.upper()) + '__INCLUDED'
+    f = open_output(args.hpp)
+    f.write('#ifndef %s\n' % guard_name)
+    f.write('#define %s\n\n' % guard_name)
+    for x in X:
+        f.write(x.declaration())
+    f.write('\n#endif // %s\n' % guard_name)
+    close_output(args.hpp, f)
 
 if args.cpp:
-    with open(args.cpp, 'w') as f:
-        for x in X:
-            f.write(x.definition())
+    f = open_output(args.cpp)
+    for x in X:
+        f.write(x.definition())
+    close_output(args.cpp, f)
