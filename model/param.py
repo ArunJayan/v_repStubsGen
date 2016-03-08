@@ -78,9 +78,9 @@ class ParamBool(Param):
 class ParamTable(Param):
     def __init__(self, node):
         super(ParamTable, self).__init__(node)
-        self.itype = node.attrib['item-type'] if 'item-type' in node.attrib else None
-        self.minsize = int(node.attrib['minsize']) if 'minsize' in node.attrib else 0
-        self.maxsize = int(node.attrib['maxsize']) if 'maxsize' in node.attrib else 2147483647
+        self.itype = node.attrib.get('item-type', None)
+        self.minsize = int(node.attrib.get('minsize', 0))
+        self.maxsize = int(node.attrib['maxsize']) if 'maxsize' in node.attrib else None
         if 'size' in node.attrib:
             self.minsize = int(node.attrib['size'])
             self.maxsize = int(node.attrib['size'])
