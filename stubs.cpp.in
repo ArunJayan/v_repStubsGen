@@ -2,159 +2,356 @@
 
 #include <iostream>
 
-bool read__bool(int stack, bool *value)
+struct vrep_exception : public std::exception
+{
+    std::string f;
+    std::string s;
+    vrep_exception(std::string f_, std::string s_) : f(f_), s(s_) {}
+    ~vrep_exception() throw() {}
+    const char* what() const throw() {return (s + " in " + f).c_str();}
+};
+
+simInt simRegisterScriptCallbackFunctionE(const simChar *funcNameAtPluginName, const simChar *callTips, simVoid (*callBack)(struct SScriptCallBack *cb))
+{
+    simInt ret = simRegisterScriptCallbackFunction(funcNameAtPluginName, callTips, callBack);
+    if(ret == 0)
+    {
+        std::cout << "Plugin '{{plugin.name}}': warning: replaced function '" << funcNameAtPluginName << "'" << std::endl;
+    }
+    if(ret == -1)
+        throw vrep_exception("simRegisterScriptCallbackFunction", "error");
+    return ret;
+}
+
+simInt simRegisterScriptVariableE(const simChar *varName, const simChar *varValue, simInt stackID)
+{
+    simInt ret = simRegisterScriptVariable(varName, varValue, stackID);
+    if(ret == 0)
+    {
+        std::cout << "Plugin '{{plugin.name}}': warning: replaced variable '" << varName << "'" << std::endl;
+    }
+    if(ret == -1)
+        throw vrep_exception("simRegisterScriptVariable", "error");
+    return ret;
+}
+
+simVoid simCallScriptFunctionExE(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId)
+{
+    if(simCallScriptFunctionEx(scriptHandleOrType, functionNameAtScriptName, stackId) == -1)
+        throw vrep_exception("simCallScriptFunctionEx", "error");
+}
+
+simInt simCreateStackE()
+{
+    simInt ret = simCreateStack();
+    if(ret == -1)
+        throw vrep_exception("simCreateStack", "error");
+    return ret;
+}
+
+simVoid simReleaseStackE(simInt stackHandle)
+{
+    if(simReleaseStack(stackHandle) != 1)
+        throw vrep_exception("simReleaseStack", "error");
+}
+
+simInt simCopyStackE(simInt stackHandle)
+{
+    simInt ret = simCopyStack(stackHandle);
+    if(ret == -1)
+        throw vrep_exception("simCopyStack", "error");
+    return ret;
+}
+
+simVoid simPushNullOntoStackE(simInt stackHandle)
+{
+    if(simPushNullOntoStack(stackHandle) == -1)
+        throw vrep_exception("simPushNullOntoStack", "error");
+}
+
+simVoid simPushBoolOntoStackE(simInt stackHandle, simBool value)
+{
+    if(simPushBoolOntoStack(stackHandle, value) == -1)
+        throw vrep_exception("simPushBoolOntoStack", "error");
+}
+
+simVoid simPushInt32OntoStackE(simInt stackHandle, simInt value)
+{
+    if(simPushInt32OntoStack(stackHandle, value) == -1)
+        throw vrep_exception("simPushInt32OntoStack", "error");
+}
+
+simVoid simPushFloatOntoStackE(simInt stackHandle, simFloat value)
+{
+    if(simPushFloatOntoStack(stackHandle, value) == -1)
+        throw vrep_exception("simPushFloatOntoStack", "error");
+}
+
+simVoid simPushDoubleOntoStackE(simInt stackHandle, simDouble value)
+{
+    if(simPushDoubleOntoStack(stackHandle, value) == -1)
+        throw vrep_exception("simPushDoubleOntoStack", "error");
+}
+
+simVoid simPushStringOntoStackE(simInt stackHandle, const simChar *value, simInt stringSize)
+{
+    if(simPushStringOntoStack(stackHandle, value, stringSize) == -1)
+        throw vrep_exception("simPushStringOntoStack", "error");
+}
+
+simVoid simPushInt32TableOntoStackE(simInt stackHandle, const simInt *values, simInt valueCnt)
+{
+    if(simPushInt32TableOntoStack(stackHandle, values, valueCnt) == -1)
+        throw vrep_exception("simPushInt32TableOntoStack", "error");
+}
+
+simVoid simPushFloatTableOntoStackE(simInt stackHandle, const simFloat *values, simInt valueCnt)
+{
+    if(simPushFloatTableOntoStack(stackHandle, values, valueCnt) == -1)
+        throw vrep_exception("simPushFloatTableOntoStack", "error");
+}
+
+simVoid simPushDoubleTableOntoStackE(simInt stackHandle, const simDouble *values, simInt valueCnt)
+{
+    if(simPushDoubleTableOntoStack(stackHandle, values, valueCnt) == -1)
+        throw vrep_exception("simPushDoubleTableOntoStack", "error");
+}
+
+simVoid simPushTableOntoStackE(simInt stackHandle)
+{
+    if(simPushTableOntoStack(stackHandle) == -1)
+        throw vrep_exception("simPushTableOntoStack", "error");
+}
+
+simVoid simInsertDataIntoStackTableE(simInt stackHandle)
+{
+    if(simInsertDataIntoStackTable(stackHandle) == -1)
+        throw vrep_exception("simInsertDataIntoStackTable", "error");
+}
+
+simInt simGetStackSizeE(simInt stackHandle)
+{
+    simInt ret = simGetStackSize(stackHandle);
+    if(ret == -1)
+        throw vrep_exception("simGetStackSize", "error");
+    return ret;
+}    
+
+simInt simPopStackItemE(simInt stackHandle, simInt count)
+{
+    simInt ret = simPopStackItem(stackHandle, count);
+    if(ret == -1)
+        throw vrep_exception("simPopStackItem", "error");
+    return ret;
+}    
+
+simVoid simMoveStackItemToTopE(simInt stackHandle, simInt cIndex)
+{
+    if(simMoveStackItemToTop(stackHandle, cIndex) == -1)
+        throw vrep_exception("simMoveStackItemToTop", "error");
+}
+
+simInt simIsStackValueNullE(simInt stackHandle)
+{
+    simInt ret = simIsStackValueNull(stackHandle);
+    if(ret == -1)
+        throw vrep_exception("simIsStackValueNull", "error");
+    return ret;
+}
+
+simInt simGetStackBoolValueE(simInt stackHandle, simBool *boolValue)
+{
+    simInt ret = simGetStackBoolValue(stackHandle, boolValue);
+    if(ret == -1)
+        throw vrep_exception("simGetStackBoolValue", "error");
+    return ret;
+}
+
+simInt simGetStackInt32ValueE(simInt stackHandle, simInt *numberValue)
+{
+    simInt ret = simGetStackInt32Value(stackHandle, numberValue);
+    if(ret == -1)
+        throw vrep_exception("simGetStackInt32Value", "error");
+    return ret;
+}
+
+simInt simGetStackFloatValueE(simInt stackHandle, simFloat *numberValue)
+{
+    simInt ret = simGetStackFloatValue(stackHandle, numberValue);
+    if(ret == -1)
+        throw vrep_exception("simGetStackFloatValue", "error");
+    return ret;
+}
+
+simInt simGetStackDoubleValueE(simInt stackHandle, simDouble *numberValue)
+{
+    simInt ret = simGetStackDoubleValue(stackHandle, numberValue);
+    if(ret == -1)
+        throw vrep_exception("simGetStackDoubleValue", "error");
+    return ret;
+}
+
+simChar* simGetStackStringValueE(simInt stackHandle, simInt *stringSize)
+{
+    simChar *ret = simGetStackStringValue(stackHandle, stringSize);
+    if(ret == NULL && (stringSize == NULL || *stringSize == -1))
+        throw vrep_exception("simGetStackStringValue", "error");
+    return ret;
+}
+
+simInt simGetStackTableInfoE(simInt stackHandle, simInt infoType)
+{
+    simInt ret = simGetStackTableInfo(stackHandle, infoType);
+    if(ret == -1)
+        throw vrep_exception("simGetStackTableInfo", "error");
+    return ret;
+}
+
+simInt simGetStackInt32TableE(simInt stackHandle, simInt *array, simInt count)
+{
+    simInt ret = simGetStackInt32Table(stackHandle, array, count);
+    if(ret == -1)
+        throw vrep_exception("simGetStackInt32Table", "error");
+    return ret;
+}
+
+simInt simGetStackFloatTableE(simInt stackHandle, simFloat *array, simInt count)
+{
+    simInt ret = simGetStackFloatTable(stackHandle, array, count);
+    if(ret == -1)
+        throw vrep_exception("simGetStackFloatTable", "error");
+    return ret;
+}
+
+simInt simGetStackDoubleTableE(simInt stackHandle, simDouble *array, simInt count)
+{
+    simInt ret = simGetStackDoubleTable(stackHandle, array, count);
+    if(ret == -1)
+        throw vrep_exception("simGetStackDoubleTable", "error");
+    return ret;
+}
+
+simVoid simUnfoldStackTableE(simInt stackHandle)
+{
+    if(simUnfoldStackTable(stackHandle) == -1)
+        throw vrep_exception("simUnfoldStackTable", "error");
+}    
+
+struct input_params_error : public std::exception
+{
+    std::string s;
+    input_params_error(std::string s_) : s(s_) {}
+    ~input_params_error() throw() {}
+    const char* what() const throw() {return s.c_str();}
+};
+
+struct output_params_error : public std::exception
+{
+    std::string s;
+    output_params_error(std::string s_) : s(s_) {}
+    ~output_params_error() throw() {}
+    const char* what() const throw() {return s.c_str();}
+};
+
+void read__bool(int stack, bool *value)
 {
     simBool v;
-    if(simGetStackBoolValue(stack, &v) == 1)
+    if(simGetStackBoolValueE(stack, &v) == 1)
     {
         *value = v;
-        simPopStackItem(stack, 1);
-        return true;
+        simPopStackItemE(stack, 1);
     }
     else
     {
-        std::cerr << "read__bool: error: expected bool value." << std::endl;
-        return false;
+        throw input_params_error("expected bool");
     }
 }
 
-bool read__int(int stack, int *value)
+void read__int(int stack, int *value)
 {
     int v;
-    if(simGetStackInt32Value(stack, &v) == 1)
+    if(simGetStackInt32ValueE(stack, &v) == 1)
     {
         *value = v;
-        simPopStackItem(stack, 1);
-        return true;
+        simPopStackItemE(stack, 1);
     }
     else
     {
-        std::cerr << "read__int: error: expected int value." << std::endl;
-        return false;
+        throw input_params_error("expected int");
     }
 }
 
-bool read__float(int stack, float *value)
+void read__float(int stack, float *value)
 {
     simFloat v;
-    if(simGetStackFloatValue(stack, &v) == 1)
+    if(simGetStackFloatValueE(stack, &v) == 1)
     {
         *value = v;
-        simPopStackItem(stack, 1);
-        return true;
+        simPopStackItemE(stack, 1);
     }
     else
     {
-        std::cerr << "read__float: error: expected float value." << std::endl;
-        return false;
+        throw input_params_error("expected float");
     }
 }
 
-bool read__std__string(int stack, std::string *value)
+void read__std__string(int stack, std::string *value)
 {
     simChar *str;
     simInt strSize;
-    if((str = simGetStackStringValue(stack, &strSize)) != NULL && strSize > 0)
+    if((str = simGetStackStringValueE(stack, &strSize)) != NULL && strSize > 0)
     {
         *value = std::string(str);
-        simPopStackItem(stack, 1);
-        return true;
+        simPopStackItemE(stack, 1);
     }
     else
     {
-        std::cerr << "read__std__string: error: expected string value." << std::endl;
-        return false;
+        throw input_params_error("expected string");
     }
 }
 
-bool write__bool(bool value, int stack)
+void write__bool(bool value, int stack)
 {
     simBool v = value;
-    if(simPushBoolOntoStack(stack, v) == -1)
-    {
-        std::cerr << "write__bool: error: push value failed." << std::endl;
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    simPushBoolOntoStackE(stack, v);
 }
 
-bool write__int(int value, int stack)
+void write__int(int value, int stack)
 {
-    int v = value;
-    if(simPushInt32OntoStack(stack, v) == -1)
-    {
-        std::cerr << "write__int: error: push value failed." << std::endl;
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    simInt v = value;
+    simPushInt32OntoStackE(stack, v);
 }
 
-bool write__float(float value, int stack)
+void write__float(float value, int stack)
 {
     simFloat v = value;
-    if(simPushFloatOntoStack(stack, v) == -1)
-    {
-        std::cerr << "write__float: error: push value failed." << std::endl;
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    simPushFloatOntoStackE(stack, v);
 }
 
-bool write__std__string(std::string value, int stack)
+void write__std__string(std::string value, int stack)
 {
     const simChar *v = value.c_str();
-    if(simPushStringOntoStack(stack, v, 0) == -1)
-    {
-        std::cerr << "write__std__string: error: push value failed." << std::endl;
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    simPushStringOntoStackE(stack, v, 0);
 }
 
 bool registerScriptStuff()
 {
+    try
+    {
     {{for enum in plugin.enums}}
     {{for item in enum.items}}
-    {
-        int ret = simRegisterScriptVariable("{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
-        if(ret == 0)
-        {
-            std::cout << "Plugin \'{{plugin.name}}\': warning: replaced variable \'{{enum.item_prefix}}{{item}}\'" << std::endl;
-        }
-        if(ret == -1)
-        {
-            std::cout << "Plugin \'{{plugin.name}}\': error: cannot register variable \'{{enum.item_prefix}}{{item}}\'" << std::endl;
-            return false;
-        }
-    }
+        simRegisterScriptVariableE("{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
     {{endfor}}
     {{endfor}}
     {{for cmd in plugin.commands}}
-    {
-        int ret = simRegisterScriptCallbackFunction("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
-        if(ret == 0)
-        {
-            std::cout << "Plugin '{{plugin.name}}': warning: replaced function '{{plugin.command_prefix}}{{cmd.name}}'" << std::endl;
-        }
-        if(ret == -1)
-        {
-            std::cout << "Plugin '{{plugin.name}}': error: cannot register function '{{plugin.command_prefix}}{{cmd.name}}'" << std::endl;
-            return false;
-        }
-    }
+        simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
     {{endfor}}
+    }
+    catch(vrep_exception& ex)
+    {
+        std::cout << "Initialization failed (registerScriptStuff): " << ex.what() << std::endl;
+        return false;
+    }
     return true;
 }
 
@@ -230,134 +427,116 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     {{cmd.name}}_in in_args;
     {{cmd.name}}_out out_args;
 
-    // check argument count
-    
-    int numArgs = simGetStackSize(p->stackID);
-    if(numArgs < {{cmd.params_min}} || numArgs > {{cmd.params_max}})
+    try
     {
-        simSetLastError(cmd, "wrong number of arguments");
-        return;
+        // check argument count
+        
+        int numArgs = simGetStackSizeE(p->stackID);
+        if(numArgs < {{cmd.params_min}})
+            throw input_params_error("too few arguments");
+        if(numArgs > {{cmd.params_max}})
+            throw input_params_error("too many arguments");
+
+        // read input arguments from stack
+
+        {{for i, p in enumerate(cmd.params)}}
+        if(numArgs >= {{i+1}})
+        {
+            try
+            {
+                {{if isinstance(p, model.ParamTable)}}
+                // read input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
+                simMoveStackItemToTopE(p->stackID, 0);
+                int i = simGetStackTableInfoE(p->stackID, 0);
+                if(i < 0)
+                    throw input_params_error("error reading input argument {{i+1}} ({{p.name}}): expected array");
+                int sz = simGetStackSizeE(p->stackID);
+                simUnfoldStackTableE(p->stackID);
+                sz = (simGetStackSizeE(p->stackID) - sz + 1) / 2;
+                for(int i = 0; i < sz; i++)
+                {
+                    simMoveStackItemToTopE(p->stackID, simGetStackSizeE(p->stackID) - 2);
+                    int j;
+                    read__int(p->stackID, &j);
+                    {{p.ctype_normalized()}} v;
+                    read__{{p.ctype_normalized()}}(p->stackID, &v);
+                    in_args.{{p.name}}.push_back(v);
+                }
+                {{if p.minsize > 0}}
+                if(in_args.{{p.name}}.size() < {{p.minsize}})
+                    throw input_params_error("argument {{i+1}} ({{p.name}}) array must have at least {{p.minsize}} elements");
+                {{endif}}
+                {{if p.maxsize is not None}}
+                if(in_args.{{p.name}}.size() > {{p.maxsize}})
+                    throw input_params_error("argument {{i+1}} ({{p.name}}) array must have at most {{p.maxsize}} elements");
+                {{endif}}
+                {{else}}
+                // read input argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
+                simMoveStackItemToTopE(p->stackID, 0);
+                read__{{p.ctype_normalized()}}(p->stackID, &(in_args.{{p.name}}));
+                {{endif}}
+            }
+            catch(std::exception& ex)
+            {
+                std::string msg = ex.what();
+                msg += " when reading input argument {{i+1}} ({{p.name}})";
+                throw input_params_error(msg);
+            }
+        }
+
+
+        {{endfor}}
+        {{if cmd.clear_stack_after_reading_input}}
+        // clear stack
+        simPopStackItemE(p->stackID, 0);
+
+
+        {{endif}}
+        {{cmd.name}}(p, cmd, &in_args, &out_args);
+    }
+    catch(input_params_error& e)
+    {
+        simSetLastError(cmd, e.what());
     }
 
-    // read input arguments from stack
-
-    {{for i, p in enumerate(cmd.params)}}
-    if(numArgs >= {{i+1}})
+    try
     {
-        {{if isinstance(p, model.ParamTable)}}
-        // read input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
-        simMoveStackItemToTop(p->stackID, 0);
-        int i = simGetStackTableInfo(p->stackID, 0);
-        if(i < 0)
+        // clear stack
+        simPopStackItemE(p->stackID, 0);
+
+        // write output arguments to stack
+
+        {{for i, p in enumerate(cmd.returns)}}
+        try
         {
-            simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}}): expected array");
-            return;
-        }
-        int sz = simGetStackSize(p->stackID);
-        if(simUnfoldStackTable(p->stackID) == -1)
-        {
-            simSetLastError(cmd, "error: unfold table failed ");
-            return;
-        }
-        sz = (simGetStackSize(p->stackID) - sz + 1) / 2;
-        for(int i = 0; i < sz; i++)
-        {
-            if(simMoveStackItemToTop(p->stackID, simGetStackSize(p->stackID) - 2) == -1)
+            {{if isinstance(p, model.ParamTable)}}
+            // write output argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
+            simPushTableOntoStackE(p->stackID);
+            for(int i = 0; i < out_args.{{p.name}}.size(); i++)
             {
-                simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}}) move to stack top");
-                return;
+                write__int(i + 1, p->stackID);
+                write__float(out_args.{{p.name}}[i], p->stackID);
+                simInsertDataIntoStackTableE(p->stackID);
             }
-            int j;
-            if(!read__int(p->stackID, &j))
-            {
-                simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}}) array item key");
-                return;
-            }
-            {{p.ctype_normalized()}} v;
-            if(!read__{{p.ctype_normalized()}}(p->stackID, &v))
-            {
-                simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}}) array item value of type {{p.ctype()}}");
-                return;
-            }
-            in_args.{{p.name}}.push_back(v);
+            {{else}}
+            // write output argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
+            write__{{p.ctype_normalized()}}(out_args.{{p.name}}, p->stackID);
+            {{endif}}
         }
-        {{if p.minsize > 0}}
-        if(in_args.{{p.name}}.size() < {{p.minsize}})
+        catch(std::exception& ex)
         {
-            simSetLastError(cmd, "argument {{i+1}} ({{p.name}}) array must have at least {{p.minsize}} elements");
-            return;
+            std::string msg = ex.what();
+            msg += " when writing output argument {{i+1}} ({{p.name}})";
+            throw output_params_error(msg);
         }
-        {{endif}}
-        {{if p.maxsize is not None}}
-        if(in_args.{{p.name}}.size() > {{p.maxsize}})
-        {
-            simSetLastError(cmd, "argument {{i+1}} ({{p.name}}) array must have at most {{p.maxsize}} elements");
-            return;
-        }
-        {{endif}}
-        {{else}}
-        // read input argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
-        simMoveStackItemToTop(p->stackID, 0);
-        if(!read__{{p.ctype_normalized()}}(p->stackID, &(in_args.{{p.name}})))
-        {
-            simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}})");
-            return;
-        }
-        {{endif}}
+        {{endfor}}
     }
-
-
-    {{endfor}}
-
-    {{if cmd.clear_stack_after_reading_input}}
-    // clear stack
-    simPopStackItem(p->stackID, 0);
-
-
-    {{endif}}
-    {{cmd.name}}(p, cmd, &in_args, &out_args);
-
-    // write output arguments to stack
-
-    {{for i, p in enumerate(cmd.returns)}}
+    catch(output_params_error& e)
     {
-        {{if isinstance(p, model.ParamTable)}}
-        // write output argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
-        if(simPushTableOntoStack(p->stackID) == -1)
-        {
-            simSetLastError(cmd, "failed to write output argument {{i+1}} ({{p.name}}) push empty table onto stack");
-            return;
-        }
-        for(int i = 0; i < out_args.{{p.name}}.size(); i++)
-        {
-            if(!write__int(i + 1, p->stackID))
-            {
-                simSetLastError(cmd, "failed to write output argument {{i+1}} ({{p.name}}) array key");
-                return;
-            }
-            if(!write__float(out_args.{{p.name}}[i], p->stackID))
-            {
-                simSetLastError(cmd, "failed to write output argument {{i+1}} ({{p.name}}) array value");
-                return;
-            }
-            if(simInsertDataIntoStackTable(p->stackID) == -1)
-            {
-                simSetLastError(cmd, "failed to write output argument {{i+1}} ({{p.name}}) array");
-                return;
-            }
-        }
-        {{else}}
-        // write output argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
-        if(!write__{{p.ctype_normalized()}}(out_args.{{p.name}}, p->stackID))
-        {
-            simSetLastError(cmd, "error writing output argument {{i+1}} ({{p.name}})");
-            return;
-        }
-        {{endif}}
+        simSetLastError(cmd, e.what());
+        // clear stack
+        simPopStackItem(p->stackID, 0); // don't throw
     }
-
-
-    {{endfor}}
 }
 
 
@@ -383,138 +562,93 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
 
 bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{fn.name}}_out *out_args)
 {
-    int stackID = simCreateStack();
-    
-    // write input arguments to stack
-    
-    {{for i, p in enumerate(fn.params)}}
+    try
     {
-        {{if isinstance(p, model.ParamTable)}}
-        // write input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
-        if(simPushTableOntoStack(stackID) == -1)
+        int stackID = simCreateStackE();
+        
+        // write input arguments to stack
+        
+        {{for i, p in enumerate(fn.params)}}
+        try
         {
-            simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) push empty table onto stack");
-            simReleaseStack(stackID);
-            return false;
+            {{if isinstance(p, model.ParamTable)}}
+            // write input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
+            simPushTableOntoStackE(stackID);
+            for(int i = 0; i < in_args->{{p.name}}.size(); i++)
+            {
+                write__int(i + 1, stackID);
+                write__{{p.ctype_normalized()}}(in_args->{{p.name}}[i], stackID);
+                simInsertDataIntoStackTableE(stackID);
+            }
+            {{else}}
+            // write input argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
+            write__{{p.ctype_normalized()}}(in_args->{{p.name}}, stackID);
+            {{endif}}
         }
-        for(int i = 0; i < in_args->{{p.name}}.size(); i++)
+        catch(std::exception& ex)
         {
-            if(!write__int(i + 1, stackID))
-            {
-                simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) array key");
-                simReleaseStack(stackID);
-                return false;
-            }
-            if(!write__{{p.ctype_normalized()}}(in_args->{{p.name}}[i], stackID))
-            {
-                simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) array value ({{p.name}})");
-                simReleaseStack(stackID);
-                return false;
-            }
-            if(simInsertDataIntoStackTable(stackID) == -1)
-            {
-                simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) array");
-                simReleaseStack(stackID);
-                return false;
-            }
+            std::string msg = ex.what();
+            msg += " when writing input argument {{i+1}} ({{p.name}})";
+            throw input_params_error(msg);
         }
-        {{else}}
-        // write input argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
-        if(!write__{{p.ctype_normalized()}}(in_args->{{p.name}}, stackID))
-        {
-            simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) ({{p.ctype()}})");
-            simReleaseStack(stackID);
-            return false;
-        }
-        {{endif}}
-    }
-    {{endfor}}
+        {{endfor}}
 
-    
-    if(simCallScriptFunctionEx(scriptId, func, stackID) != -1)
-    {
+        
+        simCallScriptFunctionExE(scriptId, func, stackID);
+
         // read output arguments from stack
         
         {{for i, p in enumerate(fn.returns)}}
+        try
         {
             {{if isinstance(p, model.ParamTable)}}
             // read output argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
-            simMoveStackItemToTop(stackID, 0);
-            int i = simGetStackTableInfo(stackID, 0);
+            simMoveStackItemToTopE(stackID, 0);
+            int i = simGetStackTableInfoE(stackID, 0);
             if(i < 0)
-            {
-                simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}): expected array");
-                simReleaseStack(stackID);
-                return false;
-            }
-            int sz = simGetStackSize(stackID);
-            if(simUnfoldStackTable(stackID) == -1)
-            {
-                simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}): unfold table failed");
-                simReleaseStack(stackID);
-                return false;
-            }
-            sz = (simGetStackSize(stackID) - sz + 1) / 2;
+                throw input_params_error("expected array");
+            int sz = simGetStackSizeE(stackID);
+            simUnfoldStackTableE(stackID);
+            sz = (simGetStackSizeE(stackID) - sz + 1) / 2;
             for(int i = 0; i < sz; i++)
             {
-                if(simMoveStackItemToTop(stackID, simGetStackSize(stackID) - 2) == -1)
-                {
-                    simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}) move to stack top");
-                    simReleaseStack(stackID);
-                    return false;
-                }
+                simMoveStackItemToTopE(stackID, simGetStackSizeE(stackID) - 2);
                 int j;
-                if(!read__int(stackID, &j))
-                {
-                    simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}) array item key");
-                    simReleaseStack(stackID);
-                    return false;
-                }
+                read__int(stackID, &j);
                 {{p.ctype_normalized()}} v;
-                if(!read__{{p.ctype_normalized()}}(stackID, &v))
-                {
-                    simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}) array item value");
-                    simReleaseStack(stackID);
-                    return false;
-                }
+                read__{{p.ctype_normalized()}}(stackID, &v);
                 out_args->{{p.name}}.push_back(v);
             }
             {{if p.minsize > 0}}
             if(out_args->{{p.name}}.size() < {{p.minsize}})
-            {
-                simSetLastError(func, "argument {{i+1}} ({{p.name}}) array must have at least {{p.minsize}} elements");
-                simReleaseStack(stackID);
-                return false;
-            }
+                throw input_params_error("must have at least {{p.minsize}} elements");
             {{endif}}
             {{if p.maxsize is not None}}
             if(out_args->{{p.name}}.size() > {{p.maxsize}})
-            {
-                simSetLastError(func, "argument {{i+1}} ({{p.name}}) array must have at most {{p.maxsize}} elements");
-                simReleaseStack(stackID);
-                return false;
-            }
+                throw input_params_error("must have at most {{p.maxsize}} elements");
             {{endif}}
             {{else}}
             // read output argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
-            if(!read__{{p.ctype_normalized()}}(stackID, &(out_args->{{p.name}})))
-            {
-                simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}) array item value");
-                simReleaseStack(stackID);
-                return false;
-            }
+            read__{{p.ctype_normalized()}}(stackID, &(out_args->{{p.name}}));
             {{endif}}
         }
+        catch(std::exception& ex)
+        {
+            std::string msg = ex.what();
+            msg += " when reading output argument {{i+1}} ({{p.name}})";
+            throw output_params_error(msg);
+        }
         {{endfor}}
+
+        simReleaseStackE(stackID);
     }
-    else
+    catch(std::exception& ex)
     {
-        simSetLastError(func, "callback error");
-        simReleaseStack(stackID);
+        simReleaseStack(stackID); // don't throw
+        simSetLastError(func, ex.what());
         return false;
     }
     
-    simReleaseStack(stackID);
     return true;
 }
 

@@ -10,14 +10,14 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/lexical_cast.hpp>
 
-bool read__bool(int stack, bool *value);
-bool read__int(int stack, int *value);
-bool read__float(int stack, float *value);
-bool read__std__string(int stack, std::string *value);
-bool write__bool(bool value, int stack);
-bool write__int(int value, int stack);
-bool write__float(float value, int stack);
-bool write__std__string(std::string value, int stack);
+void read__bool(int stack, bool *value);
+void read__int(int stack, int *value);
+void read__float(int stack, float *value);
+void read__std__string(int stack, std::string *value);
+void write__bool(bool value, int stack);
+void write__int(int value, int stack);
+void write__float(float value, int stack);
+void write__std__string(std::string value, int stack);
 
 bool registerScriptStuff();
 
