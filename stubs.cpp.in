@@ -1,0 +1,523 @@
+#include "{{header_file}}"
+
+#include <iostream>
+
+bool read__bool(int stack, bool *value)
+{
+    simBool v;
+    if(simGetStackBoolValue(stack, &v) == 1)
+    {
+        *value = v;
+        simPopStackItem(stack, 1);
+        return true;
+    }
+    else
+    {
+        std::cerr << "read__bool: error: expected bool value." << std::endl;
+        return false;
+    }
+}
+
+bool read__int(int stack, int *value)
+{
+    int v;
+    if(simGetStackInt32Value(stack, &v) == 1)
+    {
+        *value = v;
+        simPopStackItem(stack, 1);
+        return true;
+    }
+    else
+    {
+        std::cerr << "read__int: error: expected int value." << std::endl;
+        return false;
+    }
+}
+
+bool read__float(int stack, float *value)
+{
+    simFloat v;
+    if(simGetStackFloatValue(stack, &v) == 1)
+    {
+        *value = v;
+        simPopStackItem(stack, 1);
+        return true;
+    }
+    else
+    {
+        std::cerr << "read__float: error: expected float value." << std::endl;
+        return false;
+    }
+}
+
+bool read__std__string(int stack, std::string *value)
+{
+    simChar *str;
+    simInt strSize;
+    if((str = simGetStackStringValue(stack, &strSize)) != NULL && strSize > 0)
+    {
+        *value = std::string(str);
+        simPopStackItem(stack, 1);
+        return true;
+    }
+    else
+    {
+        std::cerr << "read__std__string: error: expected string value." << std::endl;
+        return false;
+    }
+}
+
+bool write__bool(bool value, int stack)
+{
+    simBool v = value;
+    if(simPushBoolOntoStack(stack, v) == -1)
+    {
+        std::cerr << "write__bool: error: push value failed." << std::endl;
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool write__int(int value, int stack)
+{
+    int v = value;
+    if(simPushInt32OntoStack(stack, v) == -1)
+    {
+        std::cerr << "write__int: error: push value failed." << std::endl;
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool write__float(float value, int stack)
+{
+    simFloat v = value;
+    if(simPushFloatOntoStack(stack, v) == -1)
+    {
+        std::cerr << "write__float: error: push value failed." << std::endl;
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool write__std__string(std::string value, int stack)
+{
+    const simChar *v = value.c_str();
+    if(simPushStringOntoStack(stack, v, 0) == -1)
+    {
+        std::cerr << "write__std__string: error: push value failed." << std::endl;
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool registerScriptStuff()
+{
+    {{for enum in plugin.enums}}
+    {{for item in enum.items}}
+    {
+        int ret = simRegisterScriptVariable("{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
+        if(ret == 0)
+        {
+            std::cout << "Plugin \'{{plugin.name}}\': warning: replaced variable \'{{enum.item_prefix}}{{item}}\'" << std::endl;
+        }
+        if(ret == -1)
+        {
+            std::cout << "Plugin \'{{plugin.name}}\': error: cannot register variable \'{{enum.item_prefix}}{{item}}\'" << std::endl;
+            return false;
+        }
+    }
+    {{endfor}}
+    {{endfor}}
+    {{for cmd in plugin.commands}}
+    {
+        int ret = simRegisterScriptCallbackFunction("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
+        if(ret == 0)
+        {
+            std::cout << "Plugin '{{plugin.name}}': warning: replaced function '{{plugin.command_prefix}}{{cmd.name}}'" << std::endl;
+        }
+        if(ret == -1)
+        {
+            std::cout << "Plugin '{{plugin.name}}': error: cannot register function '{{plugin.command_prefix}}{{cmd.name}}'" << std::endl;
+            return false;
+        }
+    }
+    {{endfor}}
+    return true;
+}
+
+
+{{for enum in plugin.enums}}
+const char* {{enum.name.lower()}}_string({{enum.name}} x)
+{
+    switch(x)
+    {
+        {{for item in enum.items}}
+        case {{enum.item_prefix}}{{item}}: return "{{enum.item_prefix}}{{item}}";
+        {{endfor}}
+        default: return "???";
+    }
+}
+
+
+{{endfor}}
+
+
+{{for cmd in plugin.commands}}
+{{cmd.name}}_in::{{cmd.name}}_in()
+{
+    {{for p in cmd.params}}
+    {{if p.default is not None}}
+    {{p.name}} = {{p.cdefault()}};
+    {{endif}}
+    {{endfor}}
+}
+
+{{cmd.name}}_out::{{cmd.name}}_out()
+{
+    {{for p in cmd.returns}}
+    {{if p.default is not None}}
+    {{p.name}} = {{p.cdefault()}};
+    {{endif}}
+    {{endfor}}
+}
+
+void {{cmd.name}}(SScriptCallBack *p, {{cmd.name}}_in *in_args, {{cmd.name}}_out *out_args)
+{
+    {{cmd.name}}(p, "{{plugin.command_prefix}}{{cmd.name}}", in_args, out_args);
+}
+
+
+{{if len(cmd.returns) == 1}}
+{{cmd.returns[0].ctype()}} {{cmd.name}}(SScriptCallBack *p{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{endfor}})
+{
+    {{cmd.name}}_in in_args;
+    {{for p in cmd.params}}
+    in_args.{{p.name}} = {{p.name}};
+    {{endfor}}
+    {{cmd.name}}_out out_args;
+    {{cmd.name}}(p, &in_args, &out_args);
+    return out_args.{{cmd.returns[0].name}};
+}
+
+
+{{endif}}
+void {{cmd.name}}(SScriptCallBack *p, {{cmd.name}}_out *out_args{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{endfor}})
+{
+    {{cmd.name}}_in in_args;
+    {{for p in cmd.params}}
+    in_args.{{p.name}} = {{p.name}};
+    {{endfor}}
+    {{cmd.name}}(p, &in_args, out_args);
+}
+
+void {{cmd.name}}_callback(SScriptCallBack *p)
+{
+    const char *cmd = "{{plugin.command_prefix}}{{cmd.name}}";
+
+    {{cmd.name}}_in in_args;
+    {{cmd.name}}_out out_args;
+
+    // check argument count
+    
+    int numArgs = simGetStackSize(p->stackID);
+    if(numArgs < {{len(cmd.mandatory_params)}} || numArgs > {{len(cmd.params)}})
+    {
+        simSetLastError(cmd, "wrong number of arguments");
+        return;
+    }
+
+    // read input arguments from stack
+
+    {{for i, p in enumerate(cmd.params)}}
+    if(numArgs >= {{i+1}})
+    {
+        {{if p.skip}}{{continue}}{{endif}}
+        {{if isinstance(p, model.ParamTable)}}
+        // read input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
+        simMoveStackItemToTop(p->stackID, 0);
+        int i = simGetStackTableInfo(p->stackID, 0);
+        if(i < 0)
+        {
+            simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}}): expected array");
+            return;
+        }
+        int sz = simGetStackSize(p->stackID);
+        if(simUnfoldStackTable(p->stackID) == -1)
+        {
+            simSetLastError(cmd, "error: unfold table failed ");
+            return;
+        }
+        sz = (simGetStackSize(p->stackID) - sz + 1) / 2;
+        for(int i = 0; i < sz; i++)
+        {
+            if(simMoveStackItemToTop(p->stackID, simGetStackSize(p->stackID) - 2) == -1)
+            {
+                simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}}) move to stack top");
+                return;
+            }
+            int j;
+            if(!read__int(p->stackID, &j))
+            {
+                simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}}) array item key");
+                return;
+            }
+            {{p.ctype_normalized()}} v;
+            if(!read__{{p.ctype_normalized()}}(p->stackID, &v))
+            {
+                simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}}) array item value of type {{p.ctype()}}");
+                return;
+            }
+            in_args.{{p.name}}.push_back(v);
+        }
+        {{if p.minsize > 0}}
+        if(in_args.{{p.name}}.size() < {{p.minsize}})
+        {
+            simSetLastError(cmd, "argument {{i+1}} ({{p.name}}) array must have at least {{p.minsize}} elements");
+            return;
+        }
+        {{endif}}
+        {{if p.maxsize is not None}}
+        if(in_args.{{p.name}}.size() > {{p.maxsize}})
+        {
+            simSetLastError(cmd, "argument {{i+1}} ({{p.name}}) array must have at most {{p.maxsize}} elements");
+            return;
+        }
+        {{endif}}
+        {{else}}
+        // read input argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
+        simMoveStackItemToTop(p->stackID, 0);
+        if(!read__{{p.ctype_normalized()}}(p->stackID, &(in_args.{{p.name}})))
+        {
+            simSetLastError(cmd, "error reading input argument {{i+1}} ({{p.name}})");
+            return;
+        }
+        {{endif}}
+    }
+
+
+    {{endfor}}
+
+    {{if not any(p.skip for p in cmd.params)}}
+    // clear stack
+    simPopStackItem(p->stackID, 0);
+
+
+    {{endif}}
+    {{cmd.name}}(p, cmd, &in_args, &out_args);
+
+    // write output arguments to stack
+
+    {{for i, p in enumerate(cmd.returns)}}
+    {
+        {{if isinstance(p, model.ParamTable)}}
+        // write output argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
+        if(simPushTableOntoStack(p->stackID) == -1)
+        {
+            simSetLastError(cmd, "failed to write output argument {{i+1}} ({{p.name}}) push empty table onto stack");
+            return;
+        }
+        for(int i = 0; i < out_args.{{p.name}}.size(); i++)
+        {
+            if(!write__int(i + 1, p->stackID))
+            {
+                simSetLastError(cmd, "failed to write output argument {{i+1}} ({{p.name}}) array key");
+                return;
+            }
+            if(!write__float(out_args.{{p.name}}[i], p->stackID))
+            {
+                simSetLastError(cmd, "failed to write output argument {{i+1}} ({{p.name}}) array value");
+                return;
+            }
+            if(simInsertDataIntoStackTable(p->stackID) == -1)
+            {
+                simSetLastError(cmd, "failed to write output argument {{i+1}} ({{p.name}}) array");
+                return;
+            }
+        }
+        {{else}}
+        // write output argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
+        if(!write__{{p.ctype_normalized()}}(out_args.{{p.name}}, p->stackID))
+        {
+            simSetLastError(cmd, "error writing output argument {{i+1}} ({{p.name}})");
+            return;
+        }
+        {{endif}}
+    }
+
+
+    {{endfor}}
+}
+
+
+{{endfor}}
+{{for fn in plugin.script_functions}}
+{{fn.name}}_in::{{fn.name}}_in()
+{
+    {{for p in fn.params}}
+    {{if p.default is not None}}
+    {{p.name}} = {{p.cdefault()}};
+    {{endif}}
+    {{endfor}}
+}
+
+{{fn.name}}_out::{{fn.name}}_out()
+{
+    {{for p in fn.returns}}
+    {{if p.default is not None}}
+    {{p.name}} = {{p.cdefault()}};
+    {{endif}}
+    {{endfor}}
+}
+
+bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{fn.name}}_out *out_args)
+{
+    int stackID = simCreateStack();
+    
+    // write input arguments to stack
+    
+    {{for i, p in enumerate(fn.params)}}
+    {
+        {{if isinstance(p, model.ParamTable)}}
+        // write input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
+        if(simPushTableOntoStack(stackID) == -1)
+        {
+            simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) push empty table onto stack");
+            simReleaseStack(stackID);
+            return false;
+        }
+        for(int i = 0; i < in_args->{{p.name}}.size(); i++)
+        {
+            if(!write__int(i + 1, stackID))
+            {
+                simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) array key");
+                simReleaseStack(stackID);
+                return false;
+            }
+            if(!write__{{p.ctype_normalized()}}(in_args->{{p.name}}[i], stackID))
+            {
+                simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) array value ({{p.name}})");
+                simReleaseStack(stackID);
+                return false;
+            }
+            if(simInsertDataIntoStackTable(stackID) == -1)
+            {
+                simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) array");
+                simReleaseStack(stackID);
+                return false;
+            }
+        }
+        {{else}}
+        // write input argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
+        if(!write__{{p.ctype_normalized()}}(in_args->{{p.name}}, stackID))
+        {
+            simSetLastError(func, "failed to write input argument {{i+1}} ({{p.name}}) ({{p.ctype()}})");
+            simReleaseStack(stackID);
+            return false;
+        }
+        {{endif}}
+    }
+    {{endfor}}
+
+    
+    if(simCallScriptFunctionEx(scriptId, func, stackID) != -1)
+    {
+        // read output arguments from stack
+        
+        {{for i, p in enumerate(fn.returns)}}
+        {
+            {{if isinstance(p, model.ParamTable)}}
+            // read output argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
+            simMoveStackItemToTop(stackID, 0);
+            int i = simGetStackTableInfo(stackID, 0);
+            if(i < 0)
+            {
+                simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}): expected array");
+                simReleaseStack(stackID);
+                return false;
+            }
+            int sz = simGetStackSize(stackID);
+            if(simUnfoldStackTable(stackID) == -1)
+            {
+                simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}): unfold table failed");
+                simReleaseStack(stackID);
+                return false;
+            }
+            sz = (simGetStackSize(stackID) - sz + 1) / 2;
+            for(int i = 0; i < sz; i++)
+            {
+                if(simMoveStackItemToTop(stackID, simGetStackSize(stackID) - 2) == -1)
+                {
+                    simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}) move to stack top");
+                    simReleaseStack(stackID);
+                    return false;
+                }
+                int j;
+                if(!read__int(stackID, &j))
+                {
+                    simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}) array item key");
+                    simReleaseStack(stackID);
+                    return false;
+                }
+                {{p.ctype_normalized()}} v;
+                if(!read__{{p.ctype_normalized()}}(stackID, &v))
+                {
+                    simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}) array item value");
+                    simReleaseStack(stackID);
+                    return false;
+                }
+                out_args->{{p.name}}.push_back(v);
+            }
+            {{if p.minsize > 0}}
+            if(out_args->{{p.name}}.size() < {{p.minsize}})
+            {
+                simSetLastError(func, "argument {{i+1}} ({{p.name}}) array must have at least {{p.minsize}} elements");
+                simReleaseStack(stackID);
+                return false;
+            }
+            {{endif}}
+            {{if p.maxsize is not None}}
+            if(out_args->{{p.name}}.size() > {{p.maxsize}})
+            {
+                simSetLastError(func, "argument {{i+1}} ({{p.name}}) array must have at most {{p.maxsize}} elements");
+                simReleaseStack(stackID);
+                return false;
+            }
+            {{endif}}
+            {{else}}
+            // read output argument {{i+1}} ({{p.name}}) of type {{p.ctype()}}
+            if(!read__{{p.ctype_normalized()}}(stackID, &(out_args->{{p.name}})))
+            {
+                simSetLastError(func, "error reading output argument {{i+1}} ({{p.name}}) array item value");
+                simReleaseStack(stackID);
+                return false;
+            }
+            {{endif}}
+        }
+        {{endfor}}
+    }
+    else
+    {
+        simSetLastError(func, "callback error");
+        simReleaseStack(stackID);
+        return false;
+    }
+    
+    simReleaseStack(stackID);
+    return true;
+}
+
+
+{{endfor}}

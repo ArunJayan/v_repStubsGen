@@ -1,0 +1,92 @@
+#ifndef STUBS_H__INCLUDED
+#define STUBS_H__INCLUDED
+
+#include <v_repLib.h>
+#include <string>
+#include <vector>
+{{if args.include}}
+#include <{{args.include}}>
+{{endif}}
+#include <boost/assign/list_of.hpp>
+#include <boost/lexical_cast.hpp>
+
+bool read__bool(int stack, bool *value);
+bool read__int(int stack, int *value);
+bool read__float(int stack, float *value);
+bool read__std__string(int stack, std::string *value);
+bool write__bool(bool value, int stack);
+bool write__int(int value, int stack);
+bool write__float(float value, int stack);
+bool write__std__string(std::string value, int stack);
+
+bool registerScriptStuff();
+
+
+{{for enum in plugin.enums}}
+enum {{enum.name}}
+{
+    {{for i, item in enumerate(enum.items)}}
+    {{enum.item_prefix}}{{item}}{{if i == 0}} = {{enum.base}}{{endif}},
+    {{endfor}}
+};
+
+const char* {{enum.name.lower()}}_string({{enum.name}} x);
+
+
+{{endfor}}
+{{for cmd in plugin.commands}}
+struct {{cmd.name}}_in
+{
+    {{for p in cmd.params}}
+    {{p.ctype()}} {{p.name}};
+    {{endfor}}
+    {{cmd.name}}_in();
+};
+
+struct {{cmd.name}}_out
+{
+    {{for p in cmd.returns}}
+    {{p.ctype()}} {{p.name}};
+    {{endfor}}
+    {{cmd.name}}_out();
+};
+
+void {{cmd.name}}(SScriptCallBack *p, {{cmd.name}}_in *in, {{cmd.name}}_out *out);
+{{if len(cmd.returns) == 1}}
+{{cmd.returns[0].ctype()}} {{cmd.name}}(SScriptCallBack *p{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{if p.cdefault()}} = {{p.cdefault()}}{{endif}}{{endfor}});
+{{endif}}
+void {{cmd.name}}(SScriptCallBack *p, {{cmd.name}}_out *out{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{if p.cdefault()}} = {{p.cdefault()}}{{endif}}{{endfor}});
+void {{cmd.name}}_callback(SScriptCallBack *p);
+
+
+{{endfor}}
+{{for fn in plugin.script_functions}}
+struct {{fn.name}}_in
+{
+    {{for p in fn.params}}
+    {{p.ctype()}} {{p.name}};
+    {{endfor}}
+    {{fn.name}}_in();
+};
+
+struct {{fn.name}}_out
+{
+    {{for p in fn.returns}}
+    {{p.ctype()}} {{p.name}};
+    {{endfor}}
+    {{fn.name}}_out();
+};
+
+bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{fn.name}}_out *out_args);
+
+
+{{endfor}}
+
+// following functions must be implemented in the plugin
+
+
+{{for cmd in plugin.commands}}
+void {{cmd.name}}(SScriptCallBack *p, const char *cmd, {{cmd.name}}_in *in, {{cmd.name}}_out *out);
+{{endfor}}
+
+#endif // STUBS_H__INCLUDED
