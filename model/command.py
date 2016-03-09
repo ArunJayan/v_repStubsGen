@@ -11,14 +11,21 @@ class Command(object):
         self.clear_stack_after_reading_input = True
 
         self.params = []
+        self.mandatory_params = []
+        self.optional_params = []
+        self.params_min = 0
+        self.params_max = 0
         for paramNode in node.findall('params/param'):
             param = Param.factory(paramNode)
+            self.params_max += 1
             if param.skip:
                 self.clear_stack_after_reading_input = False
             elif param.write_in:
-                self.params.append(param)
-        self.mandatory_params = [p for p in self.params if p.mandatory()]
-        self.optional_params = [p for p in self.params if p.optional()]
+                if param.mandatory():
+                    self.params_min += 1
+                    self.mandatory_params.append(param)
+                elif param.optional():
+                    self.optional_params.append(param)
         self.params = self.mandatory_params + self.optional_params
 
         self.returns = []

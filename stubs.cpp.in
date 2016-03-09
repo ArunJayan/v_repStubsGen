@@ -233,7 +233,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     // check argument count
     
     int numArgs = simGetStackSize(p->stackID);
-    if(numArgs < {{len(cmd.mandatory_params)}} || numArgs > {{len(cmd.params)}})
+    if(numArgs < {{cmd.params_min}} || numArgs > {{cmd.params_max}})
     {
         simSetLastError(cmd, "wrong number of arguments");
         return;
