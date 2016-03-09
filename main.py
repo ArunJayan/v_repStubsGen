@@ -42,24 +42,18 @@ for enum in plugin.enums:
         itemName = enum.item_prefix + item
         fields.append(itemName)
         registerFunc.body += [
-            '{',
-            [
+            '{', [
                 'int ret = simRegisterScriptVariable("{n}", (boost::lexical_cast<std::string>({n})).c_str(), 0);'.format(n=itemName),
                 'if(ret == 0)',
-                '{',
-                [
+                '{', [
                     'std::cout << "Plugin \'{p}\': warning: replaced variable \'{n}\'" << std::endl;'.format(p=plugin.name, n=itemName)
-                ],
-                '}',
+                ], '}',
                 'if(ret == -1)',
-                '{',
-                [
+                '{', [
                     'std::cout << "Plugin \'{p}\': error: cannot register variable \'{n}\'" << std::endl;'.format(p=plugin.name, n=itemName),
                     'return false;'
-                ],
-                '}',
-            ],
-            '}'
+                ], '}',
+            ], '}'
         ]
         convCases.append('case {n}: return "{n}";'.format(n=itemName))
     convCases.append('default: return "???";')
@@ -114,111 +108,85 @@ for cmd in plugin.commands:
         '',
         'int numArgs = simGetStackSize(p->stackID);',
         'if(numArgs < {} || numArgs > {})'.format(len(cmd.mandatory_params), len(cmd.params)),
-        '{',
-        [
+        '{', [
             'simSetLastError(cmd, "wrong number of arguments");',
             'return;'
-        ],
-        '}',
+        ], '}',
         '',
         '// read input arguments from stack',
         ''
     ] + unindent([
         [
             'if(numArgs >= {})'.format(i + 1),
-            '{',
-            [
+            '{', [
                 'simMoveStackItemToTop(p->stackID, 0);',
                 'int i = simGetStackTableInfo(p->stackID, 0);',
                 'if(i == -1)',
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "error reading input argument %d (simGetStackTableInfo error)");' % (i + 1),
                     'return;'
-                ],
-                '}',
+                ], '}',
                 'if(i == sim_stack_table_not_table || i == sim_stack_table_map)',
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "error reading input argument %d: expected array");' % (i + 1),
                     'return;'
-                ],
-                '}',
+                ], '}',
                 'int sz = simGetStackSize(p->stackID);',
                 'if(simUnfoldStackTable(p->stackID) == -1)',
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "error: unfold table failed ");',
                     'return;'
-                ],
-                '}',
+                ], '}',
                 'sz = (simGetStackSize(p->stackID) - sz + 1) / 2;',
                 'for(int i = 0; i < sz; i++)',
-                '{',
-                [
+                '{', [
                     'if(simMoveStackItemToTop(p->stackID, simGetStackSize(p->stackID) - 2) == -1)',
-                    '{',
-                    [
+                    '{', [
                         'simSetLastError(cmd, "error reading input argument %d move to stack top");' % (i + 1),
                         'return;'
-                    ],
-                    '}',
+                    ], '}',
                     'int j;',
                     'if(!read__int(p->stackID, &j))',
-                    '{',
-                    [
+                    '{', [
                         'simSetLastError(cmd, "error reading input argument %d array item key");' % (i + 1),
                         'return;'
-                    ],
-                    '}',
+                    ], '}',
                     '{ntype} v;'.format(ntype=p.ctype_normalized()),
                     'if(!read__{ntype}(p->stackID, &v))'.format(ntype=p.ctype_normalized()),
-                    '{',
-                    [
+                    '{', [
                         'simSetLastError(cmd, "error reading input argument %d array item value");' % (i + 1),
                         'return;'
-                    ],
-                    '}',
+                    ], '}',
                     'in_args.{n}.push_back(v);'.format(n=p.name)
                 ],
                 '}'] + (
                 [
                 'if(in_args.{n}.size() < {ms})'.format(n=p.name, ms=p.minsize),
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "argument %d array must have at least %d elements");' % (i + 1, p.minsize),
                     'return;'
-                ],
-                '}'
-                ] if p.minsize > 0 else []) + (
-                [
+                ], '}'
+                ] if p.minsize > 0 else []) + ([
                 'if(in_args.{n}.size() > {ms})'.format(n=p.name, ms=p.maxsize),
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "argument %d array must have at most %d elements");' % (i + 1, p.maxsize),
                     'return;'
-                ],
-                '}'
+                ], '}'
                 ] if p.maxsize is not None else []) + [
-            ],
-            '}',
+            ], '}',
             ''
         ]
         if isinstance(p, model.ParamTable) else
         [
             'if(numArgs >= {})'.format(i + 1),
-            '{',
-            [
+            '{', [
                 'simMoveStackItemToTop(p->stackID, 0);',
                 'if(!read__{ntype}(p->stackID, &(in_args.{n})))'.format(ntype=p.ctype_normalized(), n=p.name),
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "error reading input argument %d");' % (i + 1),
                     'return;'
-                ],
-                '}'
-            ],
-            '}',
+                ], '}'
+            ], '}',
             ''
         ]
         for i, p in enumerate(cmd.params) if p.write_in
@@ -234,48 +202,36 @@ for cmd in plugin.commands:
     ] + unindent([
         [
             'if(simPushTableOntoStack(p->stackID) == -1)',
-            '{',
-            [
+            '{', [
                 'simSetLastError(cmd, "failed to write output argument %d push empty table onto stack");' % (i + 1),
                 'return;'
-            ],
-            '}',
+            ], '}',
             'for(int i = 0; i < out_args.{n}.size(); i++)'.format(n=p.name),
-            '{',
-            [
+            '{', [
                 'if(!write__int(i + 1, p->stackID))',
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "failed to write output argument %d array key");' % (i + 1),
                     'return;'
-                ],
-                '}',
+                ], '}',
                 'if(!write__{ntype}(out_args.{n}[i], p->stackID))'.format(ntype=p.ctype_normalized(), n=p.name),
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "failed to write output argument %d array value");' % (i + 1),
                     'return;'
-                ],
-                '}',
+                ], '}',
                 'if(simInsertDataIntoStackTable(p->stackID) == -1)',
-                '{',
-                [
+                '{', [
                     'simSetLastError(cmd, "failed to write output argument %d array");' % (i + 1),
                     'return;'
-                ],
-                '}',
-            ],
-            '}'
+                ], '}',
+            ], '}'
         ]
         if isinstance(p, model.ParamTable) else
         [
             'if(!write__{ntype}(out_args.{n}, p->stackID))'.format(ntype=p.ctype_normalized(), n=p.name),
-            '{',
-            [
+            '{', [
                 'simSetLastError(cmd, "error writing output argument %d");' % (i + 1),
                 'return;'
-            ],
-            '}',
+            ], '}',
             ''
         ]
         for i, p in enumerate(cmd.returns) if p.write_out
@@ -285,24 +241,18 @@ for cmd in plugin.commands:
     help_out_args = ','.join('%s %s' % (p.htype(), p.name) for p in cmd.returns)
     help_in_args = ','.join('%s %s' % (p.htype(), p.name) + ('=%s' % p.default if p.default is not None else '') for p in cmd.params)
     registerFunc.body += [
-        '{',
-        [
+        '{', [
             'int ret = simRegisterScriptCallbackFunction("{}@{}", "{}={}({})", {}_callback);'.format(commandPrefix+cmd.name, plugin.name, help_out_args, commandPrefix+cmd.name, help_in_args, cmd.name),
             'if(ret == 0)',
-            '{',
-            [
+            '{', [
                 'std::cout << "Plugin \'{p}\': warning: replaced function \'{n}\'" << std::endl;'.format(p=plugin.name, n=commandPrefix+cmd.name)
-            ],
-            '}',
+            ], '}',
             'if(ret == -1)',
-            '{',
-            [
+            '{', [
                 'std::cout << "Plugin \'{p}\': error: cannot register function \'{n}\'" << std::endl;'.format(p=plugin.name, n=commandPrefix+cmd.name),
                 'return false;'
-            ],
-            '}'
-        ],
-        '}'
+            ], '}'
+        ], '}'
     ]
 
 for fn in plugin.script_functions:
@@ -325,60 +275,47 @@ for fn in plugin.script_functions:
     ] + unindent([
         [
             'if(simPushTableOntoStack(stackID) == -1)',
-            '{',
-            [
+            '{', [
                 'simSetLastError(func, "failed to write input argument %d push empty table onto stack");' % (i + 1),
                 'simReleaseStack(stackID);',
                 'return false;'
-            ],
-            '}',
+            ], '}',
             'for(int i = 0; i < in->{n}.size(); i++)'.format(n=p.name),
-            '{',
-            [
+            '{', [
                 'if(!write__int(i + 1, stackID))',
-                '{',
-                [
+                '{', [
                     'simSetLastError(func, "failed to write input argument %d array key");' % (i + 1),
                     'simReleaseStack(stackID);',
                     'return false;'
-                ],
-                '}',
+                ], '}',
                 'if(!write__{ntype}(in->{n}[i], stackID))'.format(n=p.name, ntype=p.ctype_normalized()),
-                '{',
-                [
+                '{', [
                     'simSetLastError(func, "failed to write input argument %d array value");' % (i + 1),
                     'simReleaseStack(stackID);',
                     'return false;'
-                ],
-                '}',
+                ], '}',
                 'if(simInsertDataIntoStackTable(stackID) == -1)',
-                '{',
-                [
+                '{', [
                     'simSetLastError(func, "failed to write input argument %d array");' % (i + 1),
                     'simReleaseStack(stackID);',
                     'return false;'
-                ],
-                '}',
-            ],
-            '}'
+                ], '}',
+            ], '}'
         ]
         if isinstance(p, model.ParamTable) else
         [
             'if(!write__{ntype}(in->{n}, stackID))'.format(ntype=p.ctype_normalized(), n=p.name),
-            '{',
-            [
+            '{', [
                 'simSetLastError(func, "failed to write input argument {i} ({ntype})");'.format(i=i, ntype=p.ctype_normalized()),
                 'simReleaseStack(stackID);',
                 'return false;'
-            ],
-            '}'
+            ], '}'
         ]
         for i, p in enumerate(fn.params) if p.write_in
     ]) + [
         '',
         'if(simCallScriptFunctionEx(scriptId, func, stackID) != -1)',
-        '{',
-        [
+        '{', [
             '// read output arguments from stack',
             '',
             unindent([
@@ -386,98 +323,78 @@ for fn in plugin.script_functions:
                     'simMoveStackItemToTop(stackID, 0);',
                     'int i = simGetStackTableInfo(stackID, 0);',
                     'if(i < {})'.format(p.minsize),
-                    '{',
-                    [
+                    '{', [
                         'simSetLastError(func, "error reading output argument %d: expected array");' % (i + 1),
                         'simReleaseStack(stackID);',
                         'return false;'
-                    ],
-                    '}',
+                    ], '}',
                     'int sz = simGetStackSize(stackID);',
                     'if(simUnfoldStackTable(stackID) == -1)',
-                    '{',
-                    [
+                    '{', [
                         'simSetLastError(func, "error: unfold table failed ");',
                         'simReleaseStack(stackID);',
                         'return false;'
-                    ],
-                    '}',
+                    ], '}',
                     'sz = (simGetStackSize(stackID) - sz + 1) / 2;',
                     'for(int i = 0; i < sz; i++)',
-                    '{',
-                    [
+                    '{', [
                         'if(simMoveStackItemToTop(stackID, simGetStackSize(stackID) - 2) == -1)',
-                        '{',
-                        [
+                        '{', [
                             'simSetLastError(func, "error reading output argument %d move to stack top");' % (i + 1),
                             'simReleaseStack(stackID);',
                             'return false;'
-                        ],
-                        '}',
+                        ], '}',
                         'int j;',
                         'if(!read__int(stackID, &j))',
-                        '{',
-                        [
+                        '{', [
                             'simSetLastError(func, "error reading output argument %d array item key");' % (i + 1),
                             'simReleaseStack(stackID);',
                             'return false;'
-                        ],
-                        '}',
+                        ], '}',
                         '{ntype} v;'.format(ntype=p.ctype_normalized()),
                         'if(!read__{ntype}(stackID, &v))'.format(ntype=p.ctype_normalized()),
-                        '{',
-                        [
+                        '{', [
                             'simSetLastError(func, "error reading output argument %d array item value");' % (i + 1),
                             'simReleaseStack(stackID);',
                             'return false;'
-                        ],
-                        '}',
+                        ], '}',
                         'out->{n}.push_back(v);'.format(n=p.name)
-                    ],
-                    '}'] + (
+                    ], '}'
+                ] + (
                     [
                     'if(out->{n}.size() < {ms})'.format(n=p.name, ms=p.minsize),
-                    '{',
-                    [
+                    '{', [
                         'simSetLastError(func, "argument %d array must have at least %d elements");' % (i + 1, p.minsize),
                         'simReleaseStack(stackID);',
                         'return false;'
-                    ],
-                    '}'
+                    ], '}'
                     ] if p.minsize > 0 else []) + [
                     'if(out->{n}.size() > {ms})'.format(n=p.name, ms=p.maxsize),
-                    '{',
-                    [
+                    '{', [
                         'simSetLastError(func, "argument %d array must have at most %d elements");' % (i + 1, p.maxsize),
                         'simReleaseStack(stackID);',
                         'return false;'
-                    ],
-                    '}'
+                    ], '}'
                 ]
                 if isinstance(p, model.ParamTable) else
                 [
                     'if(!read__{ntype}(stackID, &(out->{n})))'.format(ntype=p.ctype_normalized(), n=p.name),
-                    '{',
-                    [
+                    '{', [
                         'simSetLastError(func, "error reading output argument %d");' % (i + 1),
                         'simReleaseStack(stackID);',
                         'return false;'
-                    ],
-                    '}',
+                    ], '}',
                     ''
                 ]
                 for i, p in enumerate(fn.returns) if p.write_out
             ])
-        ],
-        '}',
+        ], '}',
         'else',
-        '{',
-        [
+        '{', [
             'simSetLastError(func, "callback error");',
             'simReleaseStack(stackID);',
             'return false;'
-        ],
-        '}',
+        ], '}',
         '',
         'simReleaseStack(stackID);',
         'return true;'
