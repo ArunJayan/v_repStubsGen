@@ -244,7 +244,6 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     {{for i, p in enumerate(cmd.params)}}
     if(numArgs >= {{i+1}})
     {
-        {{if p.skip}}{{continue}}{{endif}}
         {{if isinstance(p, model.ParamTable)}}
         // read input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
         simMoveStackItemToTop(p->stackID, 0);
@@ -310,7 +309,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
 
     {{endfor}}
 
-    {{if not any(p.skip for p in cmd.params)}}
+    {{if cmd.clear_stack_after_reading_input}}
     // clear stack
     simPopStackItem(p->stackID, 0);
 
