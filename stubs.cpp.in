@@ -425,14 +425,15 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
                 int i = simGetStackTableInfoE(p->stackID, 0);
                 if(i < 0)
                     throw exception("error reading input argument {{i+1}} ({{p.name}}): expected array");
-                int sz = simGetStackSizeE(p->stackID);
+                int oldsz = simGetStackSizeE(p->stackID);
                 simUnfoldStackTableE(p->stackID);
-                sz = (simGetStackSizeE(p->stackID) - sz + 1) / 2;
+                int sz = (simGetStackSizeE(p->stackID) - oldsz + 1) / 2;
                 for(int i = 0; i < sz; i++)
                 {
-                    simMoveStackItemToTopE(p->stackID, simGetStackSizeE(p->stackID) - 2);
+                    simMoveStackItemToTopE(p->stackID, oldsz - 1);
                     int j;
                     read__int(p->stackID, &j);
+                    simMoveStackItemToTop(p->stackID, oldsz - 1);
                     {{p.ctype_normalized()}} v;
                     read__{{p.ctype_normalized()}}(p->stackID, &v);
                     in_args.{{p.name}}.push_back(v);
@@ -584,14 +585,15 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
             int i = simGetStackTableInfoE(stackID, 0);
             if(i < 0)
                 throw exception("expected array");
-            int sz = simGetStackSizeE(stackID);
+            int oldsz = simGetStackSizeE(stackID);
             simUnfoldStackTableE(stackID);
-            sz = (simGetStackSizeE(stackID) - sz + 1) / 2;
+            int sz = (simGetStackSizeE(stackID) - oldsz + 1) / 2;
             for(int i = 0; i < sz; i++)
             {
-                simMoveStackItemToTopE(stackID, simGetStackSizeE(stackID) - 2);
+                simMoveStackItemToTopE(stackID, oldsz - 1);
                 int j;
                 read__int(stackID, &j);
+                simMoveStackItemToTop(stackID, oldsz - 1);
                 {{p.ctype_normalized()}} v;
                 read__{{p.ctype_normalized()}}(stackID, &v);
                 out_args->{{p.name}}.push_back(v);
