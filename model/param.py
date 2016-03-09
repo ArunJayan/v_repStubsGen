@@ -23,14 +23,8 @@ class Param(object):
     def ctype_normalized(self):
         return self.ctype().replace('::', '__')
 
-    def vtype(self):
-        return 'sim_script_arg_%s' % self.dtype
-
     def htype(self):
         return self.dtype
-
-    def lfda(self):
-        return '%sData[0]' % self.dtype
 
     def cdefault(self):
         return self.default
@@ -48,14 +42,8 @@ class ParamInt(Param):
     def __init__(self, node):
         super(ParamInt, self).__init__(node)
 
-    def vtype(self):
-        return 'sim_script_arg_int32'
-
     def htype(self):
         return 'number'
-
-    def lfda(self):
-        return 'int32Data[0]'
 
 class ParamFloat(Param):
     def __init__(self, node):
@@ -101,14 +89,8 @@ class ParamTable(Param):
     def ctype_normalized(self):
         return self.item_dummy().ctype().replace('::', '__')
 
-    def vtype(self):
-        return 'sim_script_arg_table' + ('|%s' % self.item_dummy().vtype() if self.itype is not None else '')
-
     def htype(self):
         return 'table' + ('_%d' % self.minsize if self.minsize else '')
-
-    def lfda(self):
-        return self.item_dummy().lfda()[:-3]
 
     def cdefault(self):
         if self.default is not None:
