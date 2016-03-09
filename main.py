@@ -130,7 +130,14 @@ for cmd in plugin.commands:
             [
                 'simMoveStackItemToTop(p->stackID, 0);',
                 'int i = simGetStackTableInfo(p->stackID, 0);',
-                'if(i < {})'.format(p.minsize),
+                'if(i == -1)',
+                '{',
+                [
+                    'simSetLastError(cmd, "error reading input argument %d (simGetStackTableInfo error)");' % (i + 1),
+                    'return;'
+                ],
+                '}',
+                'if(i == sim_stack_table_not_table || i == sim_stack_table_map)',
                 '{',
                 [
                     'simSetLastError(cmd, "error reading input argument %d: expected array");' % (i + 1),
@@ -547,7 +554,7 @@ bool read__int(int stack, int *value)
     }
     else
     {
-        std::cerr << "read__int: error: expected bool value." << std::endl;
+        std::cerr << "read__int: error: expected int value." << std::endl;
         return false;
     }
 }
@@ -590,7 +597,7 @@ bool write__bool(bool value, int stack)
     simBool v = value;
     if(simPushBoolOntoStack(stack, v) == -1)
     {
-        std::cerr << "write__bool: error: push table value (data) failed." << std::endl;
+        std::cerr << "write__bool: error: push value failed." << std::endl;
         return false;
     }
     else
@@ -604,7 +611,7 @@ bool write__int(int value, int stack)
     int v = value;
     if(simPushInt32OntoStack(stack, v) == -1)
     {
-        std::cerr << "write__int: error: push table value (data) failed." << std::endl;
+        std::cerr << "write__int: error: push value failed." << std::endl;
         return false;
     }
     else
@@ -618,7 +625,7 @@ bool write__float(float value, int stack)
     simFloat v = value;
     if(simPushFloatOntoStack(stack, v) == -1)
     {
-        std::cerr << "write__float: error: push table value (data) failed." << std::endl;
+        std::cerr << "write__float: error: push value failed." << std::endl;
         return false;
     }
     else
@@ -632,7 +639,7 @@ bool write__std__string(std::string value, int stack)
     const simChar *v = value.c_str();
     if(simPushStringOntoStack(stack, v, 0) == -1)
     {
-        std::cerr << "write__std__string: error: push table value (data) failed." << std::endl;
+        std::cerr << "write__std__string: error: push value failed." << std::endl;
         return false;
     }
     else
