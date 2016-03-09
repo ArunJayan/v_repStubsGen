@@ -1,9 +1,10 @@
 from .param import Param
 
 class ScriptFunction(object):
-    def __init__(self, node):
+    def __init__(self, plugin, node):
         if node.tag != 'script-function':
             raise ValueError('expected <script-function>, got <%s>' % node.tag)
+        self.plugin = plugin
         self.name = node.attrib['name']
         self.description = node.find('description')
         params = [Param.factory(p) for p in node.findall('params/param')]

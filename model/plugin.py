@@ -7,7 +7,8 @@ class Plugin(object):
         if node.tag != 'plugin':
             raise ValueError('expected <plugin>, got <%s>' % node.tag)
         self.name = node.attrib['name']
-        self.commands = [Command(n) for n in node.findall('command')]
-        self.script_functions = [ScriptFunction(n) for n in node.findall('script-function')]
-        self.enums = [Enum(n) for n in node.findall('enum')]
+        self.command_prefix = 'simExt{}_'.format(self.name)
+        self.commands = [Command(self, n) for n in node.findall('command')]
+        self.script_functions = [ScriptFunction(self, n) for n in node.findall('script-function')]
+        self.enums = [Enum(self, n) for n in node.findall('enum')]
 
