@@ -96,6 +96,9 @@ void {{cmd.name}}(SScriptCallBack *p, {{cmd.name}}_in *in, {{cmd.name}}_out *out
 {{if len(cmd.returns) == 1}}
 {{cmd.returns[0].ctype()}} {{cmd.name}}(SScriptCallBack *p{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{if p.cdefault()}} = {{p.cdefault()}}{{endif}}{{endfor}});
 {{endif}}
+{{if len(cmd.returns) == 0}}
+void {{cmd.name}}(SScriptCallBack *p{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{if p.cdefault()}} = {{p.cdefault()}}{{endif}}{{endfor}});
+{{endif}}
 void {{cmd.name}}(SScriptCallBack *p, {{cmd.name}}_out *out{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{if p.cdefault()}} = {{p.cdefault()}}{{endif}}{{endfor}});
 void {{cmd.name}}_callback(SScriptCallBack *p);
 

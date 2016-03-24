@@ -386,6 +386,19 @@ void {{cmd.name}}(SScriptCallBack *p, {{cmd.name}}_in *in_args, {{cmd.name}}_out
 
 
 {{endif}}
+{{if len(cmd.returns) == 0}}
+void {{cmd.name}}(SScriptCallBack *p{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{endfor}})
+{
+    {{cmd.name}}_in in_args;
+    {{for p in cmd.params}}
+    in_args.{{p.name}} = {{p.name}};
+    {{endfor}}
+    {{cmd.name}}_out out_args;
+    {{cmd.name}}(p, &in_args, &out_args);
+}
+
+
+{{endif}}
 void {{cmd.name}}(SScriptCallBack *p, {{cmd.name}}_out *out_args{{for p in cmd.params}}, {{p.ctype()}} {{p.name}}{{endfor}})
 {
     {{cmd.name}}_in in_args;
