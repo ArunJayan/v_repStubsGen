@@ -10,6 +10,9 @@ class Command(object):
 
         self.clear_stack_after_reading_input = True
 
+        help_in_args = []
+        help_out_args = []
+
         self.params = []
         self.mandatory_params = []
         self.optional_params = []
@@ -17,6 +20,7 @@ class Command(object):
         self.params_max = 0
         for paramNode in node.findall('params/param'):
             param = Param.factory(paramNode)
+            help_in_args.append(param)
             self.params_max += 1
             if param.skip:
                 self.clear_stack_after_reading_input = False
@@ -31,10 +35,11 @@ class Command(object):
         self.returns = []
         for paramNode in node.findall('return/param'):
             param = Param.factory(paramNode)
+            help_out_args.append(param)
             if param.write_out:
                 self.returns.append(param)
 
-        help_out_args = ','.join('%s %s' % (p.htype(), p.name) for p in self.returns)
-        help_in_args = ','.join('%s %s' % (p.htype(), p.name) + ('=%s' % p.default if p.default is not None else '') for p in self.params)
-        self.help_text = '{}={}{}({})'.format(help_out_args, plugin.command_prefix, self.name, help_in_args)
+        help_out_args = ','.join('%s %s' % (p.htype(), p.name) for p in help_out_args) + ('=' if help_out_args else '')
+        help_in_args = ','.join('%s %s' % (p.htype(), p.name) + ('=%s' % p.default if p.default is not None else '') for p in help_in_args)
+        self.help_text = '{}{}{}({})'.format(help_out_args, plugin.command_prefix, self.name, help_in_args)
 
