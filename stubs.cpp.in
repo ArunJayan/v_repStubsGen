@@ -90,15 +90,11 @@ simVoid simPushStringOntoStackE(simInt stackHandle, const simChar *value, simInt
         throw exception("simPushStringOntoStack: error");
 }
 
-#ifdef HAVE_STACK_PUSH_UINT8TABLE
-
 simVoid simPushUInt8TableOntoStackE(simInt stackHandle, const simUChar *values, simInt valueCnt)
 {
     if(simPushUInt8TableOntoStack(stackHandle, values, valueCnt) == -1)
         throw exception("simPushUInt8TableOntoStack: error");
 }
-
-#endif // HAVE_STACK_PUSH_UINT8TABLE
 
 simVoid simPushInt32TableOntoStackE(simInt stackHandle, const simInt *values, simInt valueCnt)
 {
