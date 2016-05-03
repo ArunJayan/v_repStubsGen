@@ -204,8 +204,6 @@ simInt simGetStackTableInfoE(simInt stackHandle, simInt infoType)
     return ret;
 }
 
-#ifdef HAVE_STACK_PUSH_UINT8TABLE
-
 simInt simGetStackUInt8TableE(simInt stackHandle, simUChar *array, simInt count)
 {
     simInt ret = simGetStackUInt8Table(stackHandle, array, count);
@@ -213,8 +211,6 @@ simInt simGetStackUInt8TableE(simInt stackHandle, simUChar *array, simInt count)
         throw exception("simGetStackUInt8Table: error");
     return ret;
 }
-
-#endif // HAVE_STACK_PUSH_UINT8TABLE
 
 simInt simGetStackInt32TableE(simInt stackHandle, simInt *array, simInt count)
 {
