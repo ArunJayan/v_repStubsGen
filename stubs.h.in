@@ -51,6 +51,7 @@ simInt simGetStackInt32TableE(simInt stackHandle, simInt *array, simInt count);
 simInt simGetStackFloatTableE(simInt stackHandle, simFloat *array, simInt count);
 simInt simGetStackDoubleTableE(simInt stackHandle, simDouble *array, simInt count);
 simVoid simUnfoldStackTableE(simInt stackHandle);
+simInt simGetInt32ParameterE(simInt parameter);
 
 
 void read__bool(int stack, bool *value);

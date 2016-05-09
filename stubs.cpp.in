@@ -240,7 +240,15 @@ simVoid simUnfoldStackTableE(simInt stackHandle)
 {
     if(simUnfoldStackTable(stackHandle) == -1)
         throw exception("simUnfoldStackTable: error");
-}    
+}
+
+simInt simGetInt32ParameterE(simInt parameter)
+{
+    simInt ret;
+    if(simGetInt32Parameter(parameter, &ret) == -1)
+        throw exception("simGetInt32Parameter: error");
+    return ret;
+}
 
 void read__bool(int stack, bool *value)
 {
