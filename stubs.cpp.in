@@ -250,6 +250,12 @@ simInt simGetInt32ParameterE(simInt parameter)
     return ret;
 }
 
+simVoid simReleaseBufferE(simChar *buffer)
+{
+    if(simReleaseBuffer(buffer) == -1)
+        throw exception("simReleaseBuffer: error");
+}
+
 void read__bool(int stack, bool *value)
 {
     simBool v;
@@ -300,6 +306,7 @@ void read__std__string(int stack, std::string *value)
     {
         *value = std::string(str, strSize);
         simPopStackItemE(stack, 1);
+        simReleaseBufferE(str);
     }
     else
     {
