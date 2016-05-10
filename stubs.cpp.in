@@ -364,6 +364,16 @@ bool registerScriptStuff()
         std::cout << "Initialization failed (registerScriptStuff): " << ex.what() << std::endl;
         return false;
     }
+    catch(std::string& s)
+    {
+        std::cout << "Initialization failed (registerScriptStuff): " << s << std::endl;
+        return false;
+    }
+    catch(int& n)
+    {
+        std::cout << "Initialization failed (registerScriptStuff): error #" << n << std::endl;
+        return false;
+    }
     return true;
 }
 
@@ -508,6 +518,18 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
                 msg += " when reading input argument {{i+1}} ({{p.name}})";
                 throw exception(msg);
             }
+            catch(std::string& s)
+            {
+                std::string msg = s;
+                msg += " (when reading input argument {{i+1}} ({{p.name}}))";
+                throw exception(msg);
+            }
+            catch(int& n)
+            {
+                std::stringstream ss;
+                ss << "error #" << n << " when reading input argument {{i+1}} ({{p.name}})";
+                throw exception(ss.str());
+            }
         }
 
 
@@ -523,6 +545,16 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     catch(std::exception& e)
     {
         simSetLastError(cmd, e.what());
+    }
+    catch(std::string& s)
+    {
+        simSetLastError(cmd, s.c_str());
+    }
+    catch(int& n)
+    {
+        std::stringstream ss;
+        ss << "error #" << n;
+        simSetLastError(cmd, ss.str().c_str());
     }
 
     try
@@ -555,11 +587,37 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
             msg += " when writing output argument {{i+1}} ({{p.name}})";
             throw exception(msg);
         }
+        catch(std::string& s)
+        {
+            std::string msg = s;
+            msg += " (when writing output argument {{i+1}} ({{p.name}}))";
+            throw exception(msg);
+        }
+        catch(int& n)
+        {
+            std::stringstream ss;
+            ss << "error #" << n << " (when writing output argument {{i+1}} ({{p.name}}))";
+            throw exception(ss.str());
+        }
         {{endfor}}
     }
     catch(std::exception& e)
     {
         simSetLastError(cmd, e.what());
+        // clear stack
+        simPopStackItem(p->stackID, 0); // don't throw
+    }
+    catch(std::string& s)
+    {
+        simSetLastError(cmd, s.c_str());
+        // clear stack
+        simPopStackItem(p->stackID, 0); // don't throw
+    }
+    catch(int& n)
+    {
+        std::stringstream ss;
+        ss << "error #" << n;
+        simSetLastError(cmd, ss.str().c_str());
         // clear stack
         simPopStackItem(p->stackID, 0); // don't throw
     }
@@ -619,6 +677,18 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
             msg += " when writing input argument {{i+1}} ({{p.name}})";
             throw exception(msg);
         }
+        catch(std::string& s)
+        {
+            std::string msg = s;
+            msg += " (when writing input argument {{i+1}} ({{p.name}}))";
+            throw exception(msg);
+        }
+        catch(int& n)
+        {
+            std::stringstream ss;
+            ss << "error #" << n << " when writing input argument {{i+1}} ({{p.name}})";
+            throw exception(ss.str());
+        }
         {{endfor}}
 
         
@@ -667,6 +737,18 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
             msg += " when reading output argument {{i+1}} ({{p.name}})";
             throw exception(msg);
         }
+        catch(std::string& s)
+        {
+            std::string msg = s;
+            msg += " (when reading output argument {{i+1}} ({{p.name}}))";
+            throw exception(msg);
+        }
+        catch(int& n)
+        {
+            std::stringstream ss;
+            ss << "error #" << n << " when reading output argument {{i+1}} ({{p.name}})";
+            throw exception(ss.str());
+        }
         {{endfor}}
 
         simReleaseStackE(stackID);
@@ -677,6 +759,22 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
         if(stackID != -1)
             simReleaseStack(stackID); // don't throw
         simSetLastError(func, ex.what());
+        return false;
+    }
+    catch(std::string& s)
+    {
+        if(stackID != -1)
+            simReleaseStack(stackID); // don't throw
+        simSetLastError(func, s.c_str());
+        return false;
+    }
+    catch(int& n)
+    {
+        if(stackID != -1)
+            simReleaseStack(stackID); // don't throw
+        std::stringstream ss;
+        ss << "error #" << n;
+        simSetLastError(func, ss.str().c_str());
         return false;
     }
     
