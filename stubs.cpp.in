@@ -359,7 +359,7 @@ bool registerScriptStuff()
         simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
     {{endfor}}
     }
-    catch(exception& ex)
+    catch(std::exception& ex)
     {
         std::cout << "Initialization failed (registerScriptStuff): " << ex.what() << std::endl;
         return false;
@@ -520,7 +520,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
         {{endif}}
         {{cmd.name}}(p, cmd, &in_args, &out_args);
     }
-    catch(exception& e)
+    catch(std::exception& e)
     {
         simSetLastError(cmd, e.what());
     }
@@ -557,7 +557,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
         }
         {{endfor}}
     }
-    catch(exception& e)
+    catch(std::exception& e)
     {
         simSetLastError(cmd, e.what());
         // clear stack
