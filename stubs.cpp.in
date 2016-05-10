@@ -250,6 +250,14 @@ simInt simGetInt32ParameterE(simInt parameter)
     return ret;
 }
 
+simChar* simCreateBufferE(simInt size)
+{
+    simChar *ret = simCreateBuffer(size);
+    if(ret == NULL)
+        throw exception("simCreateBuffer: error");
+    return ret;
+}
+
 simVoid simReleaseBufferE(simChar *buffer)
 {
     if(simReleaseBuffer(buffer) == -1)
