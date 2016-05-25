@@ -559,8 +559,11 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
 
     try
     {
+        {{if cmd.clear_stack_before_writing_output}}
         // clear stack
         simPopStackItemE(p->stackID, 0);
+
+        {{endif}}
 
         // write output arguments to stack
 
