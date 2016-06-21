@@ -310,7 +310,7 @@ void read__std__string(int stack, std::string *value)
 {
     simChar *str;
     simInt strSize;
-    if((str = simGetStackStringValueE(stack, &strSize)) != NULL && strSize > 0)
+    if((str = simGetStackStringValueE(stack, &strSize)) != NULL && strSize >= 0)
     {
         *value = std::string(str, strSize);
         simPopStackItemE(stack, 1);
