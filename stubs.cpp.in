@@ -191,7 +191,8 @@ simInt simGetStackDoubleValueE(simInt stackHandle, simDouble *numberValue)
 simChar* simGetStackStringValueE(simInt stackHandle, simInt *stringSize)
 {
     simChar *ret = simGetStackStringValue(stackHandle, stringSize);
-    if(ret == NULL && (stringSize == NULL || *stringSize == -1))
+    // if stringSize is NULL, we cannot distinguish error (-1) from type error (0)
+    if(ret == NULL && stringSize && *stringSize == -1)
         throw exception("simGetStackStringValue: error");
     return ret;
 }
