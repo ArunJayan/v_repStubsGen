@@ -153,6 +153,16 @@ struct {{fn.name}}_out
     {{fn.name}}_out();
 };
 
+
+{{if len(fn.returns) == 1}}
+{{fn.returns[0].ctype()}} {{fn.name}}(simInt scriptId, const char *func{{for p in fn.params}}, {{p.ctype()}} {{p.name}}{{endfor}});
+
+{{endif}}
+{{if len(fn.returns) == 0}}
+void {{fn.name}}(simInt scriptId, const char *func{{for p in fn.params}}, {{p.ctype()}} {{p.name}}{{endfor}});
+
+{{endif}}
+
 bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{fn.name}}_out *out_args);
 
 
