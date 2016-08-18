@@ -545,16 +545,25 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     }
     catch(std::exception& e)
     {
+#ifdef DEBUG
+        std::cerr << e.what() << std::endl;
+#endif
         simSetLastError(cmd, e.what());
     }
     catch(std::string& s)
     {
+#ifdef DEBUG
+        std::cerr << s << std::endl;
+#endif
         simSetLastError(cmd, s.c_str());
     }
     catch(int& n)
     {
         std::stringstream ss;
         ss << "error #" << n;
+#ifdef DEBUG
+        std::cerr << ss.str() << std::endl;
+#endif
         simSetLastError(cmd, ss.str().c_str());
     }
 
@@ -607,12 +616,18 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     }
     catch(std::exception& e)
     {
+#ifdef DEBUG
+        std::cerr << e.what() << std::endl;
+#endif
         simSetLastError(cmd, e.what());
         // clear stack
         simPopStackItem(p->stackID, 0); // don't throw
     }
     catch(std::string& s)
     {
+#ifdef DEBUG
+        std::cerr << s << std::endl;
+#endif
         simSetLastError(cmd, s.c_str());
         // clear stack
         simPopStackItem(p->stackID, 0); // don't throw
@@ -621,6 +636,9 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     {
         std::stringstream ss;
         ss << "error #" << n;
+#ifdef DEBUG
+        std::cerr << ss.str() << std::endl;
+#endif
         simSetLastError(cmd, ss.str().c_str());
         // clear stack
         simPopStackItem(p->stackID, 0); // don't throw
