@@ -98,6 +98,13 @@ class ParamTable(Param):
             d = 'boost::assign::list_of' + ''.join(map(lambda x: '(%s)' % x.strip(), d.strip()[1:-1].split(',')))
             return d
 
+class ParamStruct(Param):
+    def __init__(self, node, name):
+        super(ParamStruct, self).__init__(node)
+        self.structname = name
+        if self.default is not None:
+            raise ValueError('default attribute not supported in <struct>')
+
 Param.register_type('int', ParamInt)
 Param.register_type('float', ParamFloat)
 Param.register_type('string', ParamString)

@@ -1,4 +1,4 @@
-from .param import Param
+from .param import Param, ParamStruct
 
 class Struct(object):
     def __init__(self, plugin, node):
@@ -20,9 +20,4 @@ class Struct(object):
             self.fields.append(field)
 
         Param.register_type(self.name, lambda node: ParamStruct(node, self.name))
-
-class ParamStruct(Param):
-    def __init__(self, node, name):
-        super(ParamStruct, self).__init__(node)
-        self.structname = name
 
