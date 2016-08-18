@@ -102,8 +102,21 @@ class ParamStruct(Param):
     def __init__(self, node, name):
         super(ParamStruct, self).__init__(node)
         self.structname = name
+        self.xoptional = False
         if self.default is not None:
-            raise ValueError('default attribute not supported in <struct>')
+            if self.default == '{}':
+                self.xoptional = True
+            else:
+                raise ValueError('default value not supported in <struct>')
+
+    def mandatory(self):
+        return not self.xoptional
+
+    def optional(self):
+        return self.xoptional
+
+    def cdefault(self):
+        return None
 
 Param.register_type('int', ParamInt)
 Param.register_type('float', ParamFloat)

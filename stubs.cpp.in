@@ -515,7 +515,7 @@ const char* {{enum.name.lower()}}_string({{enum.name}} x)
 {{cmd.name}}_in::{{cmd.name}}_in()
 {
     {{for p in cmd.params}}
-    {{if p.default is not None}}
+    {{if p.cdefault() is not None}}
     {{p.name}} = {{p.cdefault()}};
     {{endif}}
     {{endfor}}
@@ -524,7 +524,7 @@ const char* {{enum.name.lower()}}_string({{enum.name}} x)
 {{cmd.name}}_out::{{cmd.name}}_out()
 {
     {{for p in cmd.returns}}
-    {{if p.default is not None}}
+    {{if p.cdefault() is not None}}
     {{p.name}} = {{p.cdefault()}};
     {{endif}}
     {{endfor}}
