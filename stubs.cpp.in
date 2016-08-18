@@ -323,6 +323,73 @@ void read__std__string(int stack, std::string *value)
     }
 }
 
+
+{{for struct in plugin.structs}}
+void read__{{struct.name}}(int stack, {{struct.name}} *value)
+{
+    try
+    {
+        simInt info = simGetStackTableInfoE(stack, 0);
+        if(info == sim_stack_table_empty)
+            return;
+        if(info != sim_stack_table_map)
+            throw exception("expected a table");
+
+        int oldsz = simGetStackSizeE(stack);
+        simUnfoldStackTableE(stack);
+        int numItems = (simGetStackSizeE(stack) - oldsz + 1) / 2;
+
+        char *str;
+        int strSz;
+
+        while(numItems >= 1)
+        {
+            simMoveStackItemToTopE(stack, oldsz - 1); // move key to top
+            if((str = simGetStackStringValueE(stack, &strSz)) != NULL && strSz >= 0)
+            {
+                simPopStackItemE(stack, 1);
+
+                simMoveStackItemToTopE(stack, oldsz - 1); // move value to top
+
+                if(0) {}
+{{for field in struct.fields}}
+                else if(strcmp(str, "{{field.name}}") == 0)
+                {
+                    try
+                    {
+                        // read field '{{field.name}}':
+                        read__{{field.ctype()}}(stack, &(value->{{field.name}}));
+                    }
+                    catch(exception &ex)
+                    {
+                        std::string msg = "field '{{field.name}}': ";
+                        msg += ex.what();
+                        throw exception(msg);
+                    }
+                }
+
+{{endfor}}
+                else
+                {
+                    std::string msg = "unexpected key: ";
+                    msg += str;
+                    throw exception(msg);
+                }
+            }
+            numItems = (simGetStackSizeE(stack) - oldsz + 1) / 2;
+        }
+    }
+    catch(exception &ex)
+    {
+        std::string msg = "read__{{struct.name}}: ";
+        msg += ex.what();
+        throw exception(msg);
+    }
+}
+
+
+{{endfor}}
+
 void write__bool(bool value, int stack)
 {
     simBool v = value;
@@ -346,6 +413,55 @@ void write__std__string(std::string value, int stack)
     const simChar *v = value.c_str();
     simPushStringOntoStackE(stack, v, value.length());
 }
+
+
+{{for struct in plugin.structs}}
+void write__{{struct.name}}(int stack, {{struct.name}} *value)
+{
+    try
+    {
+        simPushTableOntoStackE(stack);
+
+{{for field in struct.fields}}
+        try
+        {
+            // write field '{{field.name}}':
+            simPushStringOntoStackE(stack, "{{field.name}}", 0);
+            write__{{field.ctype()}}(value->{{field.name}}, stack);
+            simInsertDataIntoStackTableE(stack);
+        }
+        catch(exception &ex)
+        {
+            std::string msg = "field '{{field.name}}': ";
+            msg += ex.what();
+            throw exception(msg);
+        }
+
+{{endfor}}
+    }
+    catch(exception &ex)
+    {
+        std::string msg = "write__{{struct.name}}: ";
+        msg += ex.what();
+        throw exception(msg);
+    }
+}
+
+
+{{endfor}}
+
+
+{{for struct in plugin.structs}}
+{{struct.name}}::{{struct.name}}()
+{
+{{for field in struct.fields}}
+    {{field.name}} = {{field.cdefault()}};
+
+{{endfor}}
+}
+
+
+{{endfor}}
 
 bool registerScriptStuff()
 {
@@ -515,21 +631,23 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
             }
             catch(std::exception& ex)
             {
-                std::string msg = ex.what();
-                msg += " when reading input argument {{i+1}} ({{p.name}})";
+                std::string msg = "read in arg {{i+1}} ({{p.name}}): ";
+                msg += ex.what();
                 throw exception(msg);
             }
             catch(std::string& s)
             {
-                std::string msg = s;
-                msg += " (when reading input argument {{i+1}} ({{p.name}}))";
+                std::string msg = "read in arg {{i+1}} ({{p.name}}): ";
+                msg += s;
                 throw exception(msg);
             }
             catch(int& n)
             {
                 std::stringstream ss;
-                ss << "error #" << n << " when reading input argument {{i+1}} ({{p.name}})";
-                throw exception(ss.str());
+                ss << "error #" << n;
+                std::string msg = "read in arg {{i+1}} ({{p.name}}): ";
+                msg += ss.str();
+                throw exception(msg);
             }
         }
 
@@ -546,14 +664,14 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     catch(std::exception& e)
     {
 #ifdef DEBUG
-        std::cerr << e.what() << std::endl;
+        std::cerr << cmd << ": " << e.what() << std::endl;
 #endif
         simSetLastError(cmd, e.what());
     }
     catch(std::string& s)
     {
 #ifdef DEBUG
-        std::cerr << s << std::endl;
+        std::cerr << cmd << ": " << s << std::endl;
 #endif
         simSetLastError(cmd, s.c_str());
     }
@@ -562,7 +680,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
         std::stringstream ss;
         ss << "error #" << n;
 #ifdef DEBUG
-        std::cerr << ss.str() << std::endl;
+        std::cerr << cmd << ": " << ss.str() << std::endl;
 #endif
         simSetLastError(cmd, ss.str().c_str());
     }
@@ -596,28 +714,30 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
         }
         catch(std::exception& ex)
         {
-            std::string msg = ex.what();
-            msg += " when writing output argument {{i+1}} ({{p.name}})";
+            std::string msg = "write out arg {{i+1}} ({{p.name}}): ";
+            msg += ex.what();
             throw exception(msg);
         }
         catch(std::string& s)
         {
-            std::string msg = s;
-            msg += " (when writing output argument {{i+1}} ({{p.name}}))";
+            std::string msg = "write out arg {{i+1}} ({{p.name}})): ";
+            msg += s;
             throw exception(msg);
         }
         catch(int& n)
         {
             std::stringstream ss;
-            ss << "error #" << n << " (when writing output argument {{i+1}} ({{p.name}}))";
-            throw exception(ss.str());
+            ss << "error #" << n;
+            std::string msg = "write out arg {{i+1}} ({{p.name}})): ";
+            msg += ss.str();
+            throw exception(msg);
         }
         {{endfor}}
     }
     catch(std::exception& e)
     {
 #ifdef DEBUG
-        std::cerr << e.what() << std::endl;
+        std::cerr << cmd << ": " << e.what() << std::endl;
 #endif
         simSetLastError(cmd, e.what());
         // clear stack
@@ -626,7 +746,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     catch(std::string& s)
     {
 #ifdef DEBUG
-        std::cerr << s << std::endl;
+        std::cerr << cmd << ": " << s << std::endl;
 #endif
         simSetLastError(cmd, s.c_str());
         // clear stack
@@ -637,7 +757,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
         std::stringstream ss;
         ss << "error #" << n;
 #ifdef DEBUG
-        std::cerr << ss.str() << std::endl;
+        std::cerr << cmd << ": " << ss.str() << std::endl;
 #endif
         simSetLastError(cmd, ss.str().c_str());
         // clear stack
