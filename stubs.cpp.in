@@ -907,21 +907,23 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
         }
         catch(std::exception& ex)
         {
-            std::string msg = ex.what();
-            msg += " when reading output argument {{i+1}} ({{p.name}})";
+            std::string msg = "read out arg {{i+1}} ({{p.name}}): ";
+            msg += ex.what();
             throw exception(msg);
         }
         catch(std::string& s)
         {
-            std::string msg = s;
-            msg += " (when reading output argument {{i+1}} ({{p.name}}))";
+            std::string msg = "read out arg {{i+1}} ({{p.name}}): ";
+            msg += s;
             throw exception(msg);
         }
         catch(int& n)
         {
+            std::string msg = "read out arg {{i+1}} ({{p.name}}): ";
             std::stringstream ss;
-            ss << "error #" << n << " when reading output argument {{i+1}} ({{p.name}})";
-            throw exception(ss.str());
+            ss << "error #" << n;
+            msg += ss.str();
+            throw exception(msg);
         }
         {{endfor}}
 
