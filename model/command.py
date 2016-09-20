@@ -43,6 +43,6 @@ class Command(object):
                 self.returns.append(param)
 
         help_out_args = ','.join('%s %s' % (p.htype(), p.name) for p in help_out_args) + ('=' if help_out_args else '')
-        help_in_args = ','.join('%s %s' % (p.htype(), p.name) + ('=%s' % p.default if p.default is not None else '') for p in help_in_args)
+        help_in_args = ','.join('%s %s' % (p.htype(), p.name) + ('=%s' % p.hdefault() if p.default is not None else '') for p in help_in_args)
         self.help_text = '{}{}{}({})'.format(help_out_args, plugin.command_prefix, self.name, help_in_args)
 

@@ -29,6 +29,9 @@ class Param(object):
     def cdefault(self):
         return self.default
 
+    def hdefault(self):
+        return self.default
+
     @staticmethod
     def register_type(dtype, clazz):
         Param.mapping[dtype] = clazz
@@ -63,8 +66,16 @@ class ParamString(Param):
     def __init__(self, node):
         super(ParamString, self).__init__(node)
 
+    def cdefault(self):
+        if self.default is None: return None
+        return '"%s"' % self.default.replace('\\','\\\\').replace('"','\\"')
+
     def ctype(self):
         return 'std::string'
+
+    def hdefault(self):
+        if self.default is None: return None
+        return self.cdefault().replace('\\','\\\\').replace('"','\\"')
 
 class ParamBool(Param):
     def __init__(self, node):
