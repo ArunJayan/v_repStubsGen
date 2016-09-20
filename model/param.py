@@ -52,6 +52,13 @@ class ParamFloat(Param):
     def htype(self):
         return 'number'
 
+class ParamDouble(Param):
+    def __init__(self, node):
+        super(ParamDouble, self).__init__(node)
+
+    def htype(self):
+        return 'number'
+
 class ParamString(Param):
     def __init__(self, node):
         super(ParamString, self).__init__(node)
@@ -100,6 +107,7 @@ class ParamTable(Param):
 
 Param.register_type('int', ParamInt)
 Param.register_type('float', ParamFloat)
+Param.register_type('double', ParamDouble)
 Param.register_type('string', ParamString)
 Param.register_type('bool', ParamBool)
 Param.register_type('table', ParamTable)

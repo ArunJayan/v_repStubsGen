@@ -306,6 +306,20 @@ void read__float(int stack, float *value)
     }
 }
 
+void read__double(int stack, double *value)
+{
+    simDouble v;
+    if(simGetStackDoubleValueE(stack, &v) == 1)
+    {
+        *value = v;
+        simPopStackItemE(stack, 1);
+    }
+    else
+    {
+        throw exception("expected double");
+    }
+}
+
 void read__std__string(int stack, std::string *value)
 {
     simChar *str;
@@ -338,6 +352,12 @@ void write__float(float value, int stack)
 {
     simFloat v = value;
     simPushFloatOntoStackE(stack, v);
+}
+
+void write__double(double value, int stack)
+{
+    simDouble v = value;
+    simPushDoubleOntoStackE(stack, v);
 }
 
 void write__std__string(std::string value, int stack)

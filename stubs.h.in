@@ -59,10 +59,12 @@ simVoid simReleaseBufferE(simChar *buffer);
 void read__bool(int stack, bool *value);
 void read__int(int stack, int *value);
 void read__float(int stack, float *value);
+void read__double(int stack, double *value);
 void read__std__string(int stack, std::string *value);
 void write__bool(bool value, int stack);
 void write__int(int value, int stack);
 void write__float(float value, int stack);
+void write__double(double value, int stack);
 void write__std__string(std::string value, int stack);
 
 bool registerScriptStuff();
