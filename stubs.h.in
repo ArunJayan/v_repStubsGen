@@ -1,6 +1,13 @@
 #ifndef STUBS_H__INCLUDED
 #define STUBS_H__INCLUDED
 
+#ifdef QT_COMPIL
+#include <QThread>
+#if defined(QT_DEBUG) && !defined(DEBUG)
+#define DEBUG
+#endif
+#endif // QT_COMPIL
+
 #include <v_repLib.h>
 #include <string>
 #include <vector>
@@ -56,16 +63,36 @@ simChar* simCreateBufferE(simInt size);
 simVoid simReleaseBufferE(simChar *buffer);
 
 
+{{for struct in plugin.structs}}
+struct {{struct.name}}
+{
+{{for field in struct.fields}}
+    {{field.ctype()}} {{field.name}};
+
+{{endfor}}
+
+    {{struct.name}}();
+};
+{{endfor}}
+
 void read__bool(int stack, bool *value);
 void read__int(int stack, int *value);
 void read__float(int stack, float *value);
 void read__double(int stack, double *value);
 void read__std__string(int stack, std::string *value);
+{{for struct in plugin.structs}}
+void read__{{struct.name}}(int stack, {{struct.name}} *value);
+
+{{endfor}}
 void write__bool(bool value, int stack);
 void write__int(int value, int stack);
 void write__float(float value, int stack);
 void write__double(double value, int stack);
 void write__std__string(std::string value, int stack);
+{{for struct in plugin.structs}}
+void write__{{struct.name}}(int stack, {{struct.name}} *value);
+
+{{endfor}}
 
 bool registerScriptStuff();
 
@@ -127,6 +154,16 @@ struct {{fn.name}}_out
     {{endfor}}
     {{fn.name}}_out();
 };
+
+
+{{if len(fn.returns) == 1}}
+{{fn.returns[0].ctype()}} {{fn.name}}(simInt scriptId, const char *func{{for p in fn.params}}, {{p.ctype()}} {{p.name}}{{endfor}});
+
+{{endif}}
+{{if len(fn.returns) == 0}}
+void {{fn.name}}(simInt scriptId, const char *func{{for p in fn.params}}, {{p.ctype()}} {{p.name}}{{endfor}});
+
+{{endif}}
 
 bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{fn.name}}_out *out_args);
 
