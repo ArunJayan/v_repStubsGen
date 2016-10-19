@@ -631,7 +631,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
                     int j;
                     read__int(p->stackID, &j);
                     simMoveStackItemToTop(p->stackID, oldsz - 1);
-                    {{p.ctype_normalized()}} v;
+                    {{p.item_dummy().ctype()}} v;
                     read__{{p.ctype_normalized()}}(p->stackID, &v);
                     in_args.{{p.name}}.push_back(v);
                 }
@@ -724,7 +724,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
             for(int i = 0; i < out_args.{{p.name}}.size(); i++)
             {
                 write__int(i + 1, p->stackID);
-                write__float(out_args.{{p.name}}[i], p->stackID);
+                write__{{p.ctype_normalized()}}(out_args.{{p.name}}[i], p->stackID);
                 simInsertDataIntoStackTableE(p->stackID);
             }
             {{else}}
