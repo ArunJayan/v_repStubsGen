@@ -39,6 +39,8 @@ class Param(object):
     @staticmethod
     def factory(node):
         dtype = node.attrib['type']
+        if dtype not in Param.mapping:
+            print('ERROR: type "{}" not found in mapping; valid types are: {}'.format(dtype, ', '.join('"%s"' % k for k in Param.mapping.keys())))
         return Param.mapping[dtype](node)
 
 class ParamInt(Param):

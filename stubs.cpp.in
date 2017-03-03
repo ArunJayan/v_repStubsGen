@@ -371,8 +371,37 @@ void read__{{struct.name}}(int stack, {{struct.name}} *value)
                 {
                     try
                     {
-                        // read field '{{field.name}}':
-                        read__{{field.ctype()}}(stack, &(value->{{field.name}}));
+                        {{if isinstance(field, model.ParamTable)}}
+                        // read field '{{field.name}}' of type array of {{field.ctype()}}
+                        simMoveStackItemToTopE(stack, 0);
+                        int i = simGetStackTableInfoE(stack, 0);
+                        if(i < 0)
+                            throw exception("expected array");
+                        int oldsz = simGetStackSizeE(stack);
+                        simUnfoldStackTableE(stack);
+                        int sz = (simGetStackSizeE(stack) - oldsz + 1) / 2;
+                        for(int i = 0; i < sz; i++)
+                        {
+                            simMoveStackItemToTopE(stack, oldsz - 1);
+                            int j;
+                            read__int(stack, &j);
+                            simMoveStackItemToTop(stack, oldsz - 1);
+                            {{field.ctype_normalized()}} v;
+                            read__{{field.ctype_normalized()}}(stack, &v);
+                            value->{{field.name}}.push_back(v);
+                        }
+                        {{if field.minsize > 0}}
+                        if(value->{{field.name}}.size() < {{field.minsize}})
+                            throw exception("must have at least {{field.minsize}} elements");
+                        {{endif}}
+                        {{if field.maxsize is not None}}
+                        if(value->{{field.name}}.size() > {{field.maxsize}})
+                            throw exception("must have at most {{field.maxsize}} elements");
+                        {{endif}}
+                        {{else}}
+                        // read field '{{field.name}}' of type {{field.ctype()}}
+                        read__{{field.ctype_normalized()}}(stack, &(value->{{field.name}}));
+                        {{endif}}
                     }
                     catch(exception &ex)
                     {
@@ -445,10 +474,19 @@ void write__{{struct.name}}(int stack, {{struct.name}} *value)
         {{for field in struct.fields}}
         try
         {
-            // write field '{{field.name}}':
-            simPushStringOntoStackE(stack, "{{field.name}}", 0);
-            write__{{field.ctype()}}(value->{{field.name}}, stack);
-            simInsertDataIntoStackTableE(stack);
+            {{if isinstance(field, model.ParamTable)}}
+            // write field '{{field.name}}' of type array of {{field.ctype()}}
+            simPushTableOntoStackE(stack);
+            for(int i = 0; i < value->{{field.name}}.size(); i++)
+            {
+                write__int(i + 1, stack);
+                write__{{field.ctype_normalized()}}(value->{{field.name}}[i], stack);
+                simInsertDataIntoStackTableE(stack);
+            }
+            {{else}}
+            // write field '{{field.name}}' of type {{field.ctype()}}
+            write__{{field.ctype_normalized()}}(value->{{field.name}}, stack);
+            {{endif}}
         }
         catch(exception &ex)
         {
@@ -475,8 +513,10 @@ void write__{{struct.name}}(int stack, {{struct.name}} *value)
 {{struct.name}}::{{struct.name}}()
 {
 {{for field in struct.fields}}
+{{if field.default}}
     {{field.name}} = {{field.cdefault()}};
 
+{{endif}}
 {{endfor}}
 }
 
