@@ -132,7 +132,7 @@ simInt simGetStackSizeE(simInt stackHandle)
     if(ret == -1)
         throw exception("simGetStackSize: error");
     return ret;
-}    
+}
 
 simInt simPopStackItemE(simInt stackHandle, simInt count)
 {
@@ -140,7 +140,7 @@ simInt simPopStackItemE(simInt stackHandle, simInt count)
     if(ret == -1)
         throw exception("simPopStackItem: error");
     return ret;
-}    
+}
 
 simVoid simMoveStackItemToTopE(simInt stackHandle, simInt cIndex)
 {
@@ -642,7 +642,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
     try
     {
         // check argument count
-        
+
         int numArgs = simGetStackSizeE(p->stackID);
         if(numArgs < {{cmd.params_min}})
             throw exception("too few arguments");
@@ -885,9 +885,9 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
     try
     {
         stackID = simCreateStackE();
-        
+
         // write input arguments to stack
-        
+
         {{for i, p in enumerate(fn.params)}}
         try
         {
@@ -925,11 +925,11 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
         }
         {{endfor}}
 
-        
+
         simCallScriptFunctionExE(scriptId, func, stackID);
 
         // read output arguments from stack
-        
+
         {{for i, p in enumerate(fn.returns)}}
         try
         {
@@ -1013,7 +1013,7 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
         simSetLastError(func, ss.str().c_str());
         return false;
     }
-    
+
     return true;
 }
 
