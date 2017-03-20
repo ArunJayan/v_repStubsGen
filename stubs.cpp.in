@@ -657,6 +657,24 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
             try
             {
                 {{if isinstance(p, model.ParamTable)}}
+                {{if p.itype in ('float', 'double', 'int')}}
+                // read input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}} using fast function
+                simMoveStackItemToTopE(p->stackID, 0);
+                int sz = simGetStackTableInfoE(p->stackID, 0);
+                if(sz < 0)
+                    throw exception("expected array");
+                if(simGetStackTableInfoE(p->stackID, 2) != 1)
+                    throw exception("fast_write_type reader exception #1");
+                in_args.{{p.name}}.resize(sz);
+                {{if p.itype == 'float'}}
+                simGetStackFloatTableE(p->stackID, &(in_args.{{p.name}}[0]), sz);
+                {{elif p.itype == 'double'}}
+                simGetStackDoubleTableE(p->stackID, &(in_args.{{p.name}}[0]), sz);
+                {{elif p.itype == 'int'}}
+                simGetStackInt32TableE(p->stackID, &(in_args.{{p.name}}[0]), sz);
+                {{endif}}
+                simPopStackItemE(p->stackID, 1);
+                {{else}}
                 // read input argument {{i+1}} ({{p.name}}) of type array of {{p.ctype()}}
                 simMoveStackItemToTopE(p->stackID, 0);
                 int i = simGetStackTableInfoE(p->stackID, 0);
@@ -675,6 +693,8 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
                     read__{{p.ctype_normalized()}}(p->stackID, &v);
                     in_args.{{p.name}}.push_back(v);
                 }
+                {{endif}}
+
                 {{if p.minsize > 0}}
                 if(in_args.{{p.name}}.size() < {{p.minsize}})
                     throw exception("argument {{i+1}} ({{p.name}}) array must have at least {{p.minsize}} elements");
