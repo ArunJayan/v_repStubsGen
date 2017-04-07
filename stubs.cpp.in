@@ -486,6 +486,7 @@ void write__{{struct.name}}({{struct.name}} *value, int stack)
         {{for field in struct.fields}}
         try
         {
+            simPushStringOntoStackE(stack, "{{field.name}}", 0);
             {{if isinstance(field, model.ParamTable)}}
             // write field '{{field.name}}' of type array of {{field.ctype()}}
             simPushTableOntoStackE(stack);
@@ -499,6 +500,7 @@ void write__{{struct.name}}({{struct.name}} *value, int stack)
             // write field '{{field.name}}' of type {{field.ctype()}}
             write__{{field.ctype_normalized()}}({{field.argmod()}}(value->{{field.name}}), stack);
             {{endif}}
+            simInsertDataIntoStackTableE(stack);
         }
         CATCH_AND_RETHROW("field '{{field.name}}': ")
 
