@@ -867,37 +867,6 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
 }
 
 
-{{if len(fn.returns) == 1}}
-{{fn.returns[0].ctype()}} {{fn.name}}(simInt scriptId, const char *func{{for p in fn.params}}, {{p.ctype()}} {{p.name}}{{endfor}})
-{
-    {{fn.name}}_in in_args;
-    {{for p in fn.params}}
-    in_args.{{p.name}} = {{p.name}};
-    {{endfor}}
-    {{fn.name}}_out out_args;
-    if(!{{fn.name}}(scriptId, func, &in_args, &out_args))
-        throw exception("call {{fn.name}} failed");
-    return out_args.{{fn.returns[0].name}};
-}
-
-
-{{endif}}
-{{if len(fn.returns) == 0}}
-void {{fn.name}}(simInt scriptId, const char *func{{for p in fn.params}}, {{p.ctype()}} {{p.name}}{{endfor}})
-{
-    {{fn.name}}_in in_args;
-    {{for p in fn.params}}
-    in_args.{{p.name}} = {{p.name}};
-    {{endfor}}
-    {{fn.name}}_out out_args;
-    if(!{{fn.name}}(scriptId, func, &in_args, &out_args))
-        throw exception("call {{fn.name}} failed");
-}
-
-
-{{endif}}
-
-
 bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{fn.name}}_out *out_args)
 {
     int stackID = -1;
