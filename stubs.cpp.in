@@ -2,6 +2,28 @@
 
 #include <iostream>
 
+#define CATCH_AND_RETHROW(prefix)   \
+    catch(std::exception &ex)       \
+    {                               \
+        std::string msg = prefix;   \
+        msg += ex.what();           \
+        throw exception(msg);       \
+    }                               \
+    catch(std::string& s)           \
+    {                               \
+        std::string msg = prefix;   \
+        msg += s;                   \
+        throw exception(msg);       \
+    }                               \
+    catch(int& n)                   \
+    {                               \
+        std::stringstream msg;      \
+        msg << prefix;              \
+        msg << "error #" << n;      \
+        throw exception(msg.str()); \
+    }
+
+
 simInt simRegisterScriptCallbackFunctionE(const simChar *funcNameAtPluginName, const simChar *callTips, simVoid (*callBack)(struct SScriptCallBack *cb))
 {
     simInt ret = simRegisterScriptCallbackFunction(funcNameAtPluginName, callTips, callBack);
@@ -403,12 +425,7 @@ void read__{{struct.name}}(int stack, {{struct.name}} *value)
                         read__{{field.ctype_normalized()}}(stack, &(value->{{field.name}}));
                         {{endif}}
                     }
-                    catch(exception &ex)
-                    {
-                        std::string msg = "field '{{field.name}}': ";
-                        msg += ex.what();
-                        throw exception(msg);
-                    }
+                    CATCH_AND_RETHROW("field '{{field.name}}': ")
                 }
 
 {{endfor}}
@@ -422,12 +439,7 @@ void read__{{struct.name}}(int stack, {{struct.name}} *value)
             numItems = (simGetStackSizeE(stack) - oldsz + 1) / 2;
         }
     }
-    catch(exception &ex)
-    {
-        std::string msg = "read__{{struct.name}}: ";
-        msg += ex.what();
-        throw exception(msg);
-    }
+    CATCH_AND_RETHROW("read__{{struct.name}}: ")
 }
 
 
@@ -488,21 +500,11 @@ void write__{{struct.name}}({{struct.name}} *value, int stack)
             write__{{field.ctype_normalized()}}({{field.argmod()}}(value->{{field.name}}), stack);
             {{endif}}
         }
-        catch(exception &ex)
-        {
-            std::string msg = "field '{{field.name}}': ";
-            msg += ex.what();
-            throw exception(msg);
-        }
+        CATCH_AND_RETHROW("field '{{field.name}}': ")
 
         {{endfor}}
     }
-    catch(exception &ex)
-    {
-        std::string msg = "write__{{struct.name}}: ";
-        msg += ex.what();
-        throw exception(msg);
-    }
+    CATCH_AND_RETHROW("write__{{struct.name}}: ")
 }
 
 
@@ -527,28 +529,22 @@ bool registerScriptStuff()
 {
     try
     {
-    {{for enum in plugin.enums}}
-    {{for item in enum.items}}
-        simRegisterScriptVariableE("{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
-    {{endfor}}
-    {{endfor}}
-    {{for cmd in plugin.commands}}
-        simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
-    {{endfor}}
+        try
+        {
+        {{for enum in plugin.enums}}
+        {{for item in enum.items}}
+            simRegisterScriptVariableE("{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
+        {{endfor}}
+        {{endfor}}
+        {{for cmd in plugin.commands}}
+            simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
+        {{endfor}}
+        }
+        CATCH_AND_RETHROW("Initialization failed (registerScriptStuff): ")
     }
-    catch(std::exception& ex)
+    catch(exception& ex)
     {
-        std::cout << "Initialization failed (registerScriptStuff): " << ex.what() << std::endl;
-        return false;
-    }
-    catch(std::string& s)
-    {
-        std::cout << "Initialization failed (registerScriptStuff): " << s << std::endl;
-        return false;
-    }
-    catch(int& n)
-    {
-        std::cout << "Initialization failed (registerScriptStuff): error #" << n << std::endl;
+        std::cout << ex.what() << std::endl;
         return false;
     }
     return true;
@@ -709,26 +705,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
                 read__{{p.ctype_normalized()}}(p->stackID, &(in_args.{{p.name}}));
                 {{endif}}
             }
-            catch(std::exception& ex)
-            {
-                std::string msg = "read in arg {{i+1}} ({{p.name}}): ";
-                msg += ex.what();
-                throw exception(msg);
-            }
-            catch(std::string& s)
-            {
-                std::string msg = "read in arg {{i+1}} ({{p.name}}): ";
-                msg += s;
-                throw exception(msg);
-            }
-            catch(int& n)
-            {
-                std::stringstream ss;
-                ss << "error #" << n;
-                std::string msg = "read in arg {{i+1}} ({{p.name}}): ";
-                msg += ss.str();
-                throw exception(msg);
-            }
+            CATCH_AND_RETHROW("read in arg {{i+1}} ({{p.name}}): ")
         }
 
 
@@ -792,26 +769,7 @@ void {{cmd.name}}_callback(SScriptCallBack *p)
             write__{{p.ctype_normalized()}}({{p.argmod()}}(out_args.{{p.name}}), p->stackID);
             {{endif}}
         }
-        catch(std::exception& ex)
-        {
-            std::string msg = "write out arg {{i+1}} ({{p.name}}): ";
-            msg += ex.what();
-            throw exception(msg);
-        }
-        catch(std::string& s)
-        {
-            std::string msg = "write out arg {{i+1}} ({{p.name}})): ";
-            msg += s;
-            throw exception(msg);
-        }
-        catch(int& n)
-        {
-            std::stringstream ss;
-            ss << "error #" << n;
-            std::string msg = "write out arg {{i+1}} ({{p.name}})): ";
-            msg += ss.str();
-            throw exception(msg);
-        }
+        CATCH_AND_RETHROW("write out arg {{i+1}} ({{p.name}}): ")
         {{endfor}}
     }
     catch(std::exception& e)
@@ -894,24 +852,7 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
             write__{{p.ctype_normalized()}}({{p.argmod()}}(in_args->{{p.name}}), stackID);
             {{endif}}
         }
-        catch(std::exception& ex)
-        {
-            std::string msg = ex.what();
-            msg += " when writing input argument {{i+1}} ({{p.name}})";
-            throw exception(msg);
-        }
-        catch(std::string& s)
-        {
-            std::string msg = s;
-            msg += " (when writing input argument {{i+1}} ({{p.name}}))";
-            throw exception(msg);
-        }
-        catch(int& n)
-        {
-            std::stringstream ss;
-            ss << "error #" << n << " when writing input argument {{i+1}} ({{p.name}})";
-            throw exception(ss.str());
-        }
+        CATCH_AND_RETHROW("writing input argument {{i+1}} ({{p.name}}): ")
         {{endfor}}
 
 
@@ -954,26 +895,7 @@ bool {{fn.name}}(simInt scriptId, const char *func, {{fn.name}}_in *in_args, {{f
             read__{{p.ctype_normalized()}}(stackID, &(out_args->{{p.name}}));
             {{endif}}
         }
-        catch(std::exception& ex)
-        {
-            std::string msg = "read out arg {{i+1}} ({{p.name}}): ";
-            msg += ex.what();
-            throw exception(msg);
-        }
-        catch(std::string& s)
-        {
-            std::string msg = "read out arg {{i+1}} ({{p.name}}): ";
-            msg += s;
-            throw exception(msg);
-        }
-        catch(int& n)
-        {
-            std::string msg = "read out arg {{i+1}} ({{p.name}}): ";
-            std::stringstream ss;
-            ss << "error #" << n;
-            msg += ss.str();
-            throw exception(msg);
-        }
+        CATCH_AND_RETHROW("read out arg {{i+1}} ({{p.name}}): ")
         {{endfor}}
 
         simReleaseStackE(stackID);
