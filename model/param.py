@@ -32,6 +32,9 @@ class Param(object):
     def hdefault(self):
         return self.default
 
+    def argmod(self):
+        return ''
+
     @staticmethod
     def register_type(dtype, clazz):
         Param.mapping[dtype] = clazz
@@ -137,6 +140,9 @@ class ParamStruct(Param):
 
     def cdefault(self):
         return None
+
+    def argmod(self):
+        return '&'
 
 Param.register_type('int', ParamInt)
 Param.register_type('float', ParamFloat)
