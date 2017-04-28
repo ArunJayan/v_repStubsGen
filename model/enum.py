@@ -5,6 +5,6 @@ class Enum(object):
         self.plugin = plugin
         self.name = node.attrib['name']
         self.item_prefix = node.attrib.get('item-prefix', '')
-        self.base = node.attrib.get('base', None)
+        self.base = int(node.attrib.get('base', 0))
         self.items = [n.attrib['name'] for n in node.findall('item')]
 
