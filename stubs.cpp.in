@@ -535,9 +535,9 @@ bool registerScriptStuff()
         {
         {{for enum in plugin.enums}}
         {{for item in enum.items}}
-            simRegisterScriptVariableE("sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
+            simRegisterScriptVariableE("sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
             {{if plugin.short_name}}
-            simRegisterScriptVariableE("sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
+            simRegisterScriptVariableE("sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
             {{endif}}
         {{endfor}}
         {{endfor}}
@@ -565,7 +565,7 @@ const char* {{enum.name.lower()}}_string({{enum.name}} x)
     switch(x)
     {
         {{for item in enum.items}}
-        case {{enum.item_prefix}}{{item}}: return "{{enum.item_prefix}}{{item}}";
+        case sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}: return "sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}";
         {{endfor}}
         default: return "???";
     }

@@ -101,7 +101,10 @@ bool registerScriptStuff();
 enum {{enum.name}}
 {
     {{for i, item in enumerate(enum.items)}}
-    {{enum.item_prefix}}{{item}}{{if i == 0}} = {{enum.base}}{{endif}},
+    sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}} = {{int(enum.base) + i}},
+    {{if plugin.short_name}}
+    sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}} = {{int(enum.base) + i}},
+    {{endif}}
     {{endfor}}
 };
 
