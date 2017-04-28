@@ -535,7 +535,7 @@ bool registerScriptStuff()
         {
         {{for enum in plugin.enums}}
         {{for item in enum.items}}
-            simRegisterScriptVariableE("{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
+            simRegisterScriptVariableE("sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
         {{endfor}}
         {{endfor}}
         {{for cmd in plugin.commands}}
