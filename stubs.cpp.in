@@ -536,10 +536,16 @@ bool registerScriptStuff()
         {{for enum in plugin.enums}}
         {{for item in enum.items}}
             simRegisterScriptVariableE("sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
+            {{if plugin.short_name}}
+            simRegisterScriptVariableE("sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>({{enum.item_prefix}}{{item}})).c_str(), 0);
+            {{endif}}
         {{endfor}}
         {{endfor}}
         {{for cmd in plugin.commands}}
             simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
+            {{if plugin.short_name}}
+            simRegisterScriptCallbackFunctionE("simExt{{plugin.short_name}}_{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
+            {{endif}}
         {{endfor}}
         }
         CATCH_AND_RETHROW("Initialization failed (registerScriptStuff): ")
