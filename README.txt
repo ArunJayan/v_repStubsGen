@@ -15,3 +15,6 @@ Usage:
     > python -m v_repStubsGen -H stubs.h -C stubs.cpp callbacks.xml
 
     generates cpp/h in one shot.
+
+    See [v_repExtPluginSkeletonNG](https://github.com/fferri/v_repExtPluginSkeletonNG) for an example of a V-REP plugin using this framework.
+
