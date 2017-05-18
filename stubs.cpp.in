@@ -560,6 +560,7 @@ bool registerScriptStuff()
         {{if plugin.short_name}}
             // new style (OO-like) stuff:
             simRegisterScriptVariableE("sim{{plugin.short_name}}", "{}", 0);
+            simRegisterScriptVariableE("sim{{plugin.short_name}}", "require('simExtCustomUI')", 0);
             // register new-style short-version varables
         {{for enum in plugin.enums}}
         {{for item in enum.items}}
