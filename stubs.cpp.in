@@ -533,25 +533,45 @@ bool registerScriptStuff()
     {
         try
         {
-        {{if plugin.short_name}}
-            simRegisterScriptVariableE("sim{{plugin.short_name}}", "{}", 0);
-        {{endif}}
+            // register variables
         {{for enum in plugin.enums}}
         {{for item in enum.items}}
             simRegisterScriptVariableE("sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
-            {{if plugin.short_name}}
-            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
-            simRegisterScriptVariableE("sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
-            {{endif}}
         {{endfor}}
         {{endfor}}
+            // register commands
         {{for cmd in plugin.commands}}
             simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
-            {{if plugin.short_name}}
-            simRegisterScriptCallbackFunctionE("sim{{plugin.short_name}}.{{cmd.name}}@{{plugin.name}}", "{{cmd.help_out_args_text}}sim{{plugin.short_name}}.{{cmd.name}}({{cmd.help_in_args_text}})", {{cmd.name}}_callback);
-            simRegisterScriptCallbackFunctionE("simExt{{plugin.short_name}}_{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}", {{cmd.name}}_callback);
-            {{endif}}
         {{endfor}}
+
+        {{if plugin.short_name}}
+            // register short-version varables
+        {{for enum in plugin.enums}}
+        {{for item in enum.items}}
+            simRegisterScriptVariableE("sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
+        {{endfor}}
+        {{endfor}}
+            // register short-version commands
+        {{for cmd in plugin.commands}}
+            simRegisterScriptCallbackFunctionE("simExt{{plugin.short_name}}_{{cmd.name}}@{{plugin.name}}", "{{cmd.help_out_args_text}}simExt{{plugin.short_name}}_{{cmd.name}}({{cmd.help_in_args_text}})", {{cmd.name}}_callback);
+        {{endfor}}
+        {{endif}}
+
+        {{if plugin.short_name}}
+            // new style (OO-like) stuff:
+            simRegisterScriptVariableE("sim{{plugin.short_name}}", "{}", 0);
+            // register new-style short-version varables
+        {{for enum in plugin.enums}}
+        {{for item in enum.items}}
+            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
+        {{endfor}}
+        {{endfor}}
+            // register new-style short-version commands
+        {{for cmd in plugin.commands}}
+            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{cmd.name}}", "{{plugin.command_prefix}}{{cmd.name}}", 0);
+            simRegisterScriptCallbackFunctionE("sim{{plugin.short_name}}.{{cmd.name}}@{{plugin.name}}", "{{cmd.help_out_args_text}}sim{{plugin.short_name}}.{{cmd.name}}({{cmd.help_in_args_text}})", 0);
+        {{endfor}}
+        {{endif}}
         }
         CATCH_AND_RETHROW("Initialization failed (registerScriptStuff): ")
     }
