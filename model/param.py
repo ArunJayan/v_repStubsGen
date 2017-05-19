@@ -5,7 +5,11 @@ class Param(object):
         if node.tag != 'param':
             raise ValueError('expected <param>, got <%s>' % node.tag)
         self.name = node.attrib['name']
-        self.description = node.find('description')
+        try:
+            descnode = node.find('description')
+            self.description = '' if descnode is None else descnode.text
+        except AttributeError:
+            self.description = ''
         self.dtype = node.attrib['type']
         self.default = node.attrib.get('default', None)
         self.skip = node.attrib.get('skip', 'false').lower() in ('true', 'yes', '1')

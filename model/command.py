@@ -6,7 +6,9 @@ class Command(object):
             raise ValueError('expected <command>, got <%s>' % node.tag)
         self.plugin = plugin
         self.name = node.attrib['name']
-        self.description = node.find('description')
+
+        descnode = node.find('description')
+        self.description = '' if descnode is None else descnode.text
 
         self.clear_stack_after_reading_input = True
         self.clear_stack_before_writing_output = True
@@ -45,4 +47,24 @@ class Command(object):
         self.help_out_args_text = ','.join('%s %s' % (p.htype(), p.name) for p in help_out_args) + ('=' if help_out_args else '')
         self.help_in_args_text = ','.join('%s %s' % (p.htype(), p.name) + ('=%s' % p.hdefault() if p.default is not None else '') for p in help_in_args)
         self.help_text = '{}{}{}({})'.format(self.help_out_args_text, plugin.command_prefix, self.name, self.help_in_args_text)
+
+        if self.description.strip():
+            self.documentation = '\\n\\n'
+            self.documentation += self.description.strip()
+        if len(help_in_args) > 0:
+            self.documentation += '\\n\\nParameters:\\n'
+            for p in help_in_args:
+                self.documentation += p.name
+                if p.description.strip():
+                    self.documentation += ': '
+                    self.documentation += p.description.strip()
+                self.documentation += '\\n'
+        if len(help_out_args) > 0:
+            self.documentation += '\\n\\nReturn values:\\n'
+            for p in help_out_args:
+                self.documentation += p.name
+                if p.description.strip():
+                    self.documentation += ': '
+                    self.documentation += p.description.strip()
+                self.documentation += '\\n'
 
