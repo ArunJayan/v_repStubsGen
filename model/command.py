@@ -54,7 +54,7 @@ class Command(object):
         if len(help_in_args) > 0:
             self.documentation += '\\n\\nParameters:\\n'
             for p in help_in_args:
-                self.documentation += p.name
+                self.documentation += '    ' + p.name
                 if p.description.strip():
                     self.documentation += ': '
                     self.documentation += p.description.strip()
@@ -62,7 +62,7 @@ class Command(object):
         if len(help_out_args) > 0:
             self.documentation += '\\n\\nReturn values:\\n'
             for p in help_out_args:
-                self.documentation += p.name
+                self.documentation += '    ' + p.name
                 if p.description.strip():
                     self.documentation += ': '
                     self.documentation += p.description.strip()
