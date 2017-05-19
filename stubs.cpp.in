@@ -569,7 +569,7 @@ bool registerScriptStuff()
         {{endfor}}
             // register new-style short-version commands
         {{for cmd in plugin.commands}}
-            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{cmd.name}}", "{{plugin.command_prefix}}{{cmd.name}}", 0);
+            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{cmd.name}}", "{{plugin.command_prefix}}{{cmd.name}}", -1);
             simRegisterScriptCallbackFunctionE("sim{{plugin.short_name}}.{{cmd.name}}@{{plugin.name}}", "{{cmd.help_out_args_text}}sim{{plugin.short_name}}.{{cmd.name}}({{cmd.help_in_args_text}})", 0);
         {{endfor}}
         {{endif}}
