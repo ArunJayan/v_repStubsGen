@@ -594,8 +594,9 @@ bool registerScriptStuff()
             simRegisterScriptVariableE("sim{{plugin.short_name}}", "require('simExtCustomUI')", 0);
             // register new-style short-version varables
         {{for enum in plugin.enums}}
+            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{enum.name}}", "{}", 0);
         {{for item in enum.items}}
-            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
+            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{enum.name}}.{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
         {{endfor}}
         {{endfor}}
             // register new-style short-version commands
