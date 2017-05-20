@@ -50,6 +50,6 @@ class Command(object):
 
         if self.description.strip():
             self.documentation = '\\n\\n' + self.description.strip()
-        while self.documentation[-2:] == '\\n':
-            self.documentation = self.documentation[:-2]
+            while self.documentation[-2:] == '\\n':
+                self.documentation = self.documentation[:-2]
 
