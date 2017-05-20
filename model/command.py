@@ -49,23 +49,7 @@ class Command(object):
         self.help_text = '{}{}{}({})'.format(self.help_out_args_text, plugin.command_prefix, self.name, self.help_in_args_text)
 
         if self.description.strip():
-            self.documentation = '\\n\\n' + self.description.strip() + '\\n'
-        if len(help_in_args) > 0:
-            self.documentation += '\\nParameters:\\n'
-            for p in help_in_args:
-                self.documentation += '    ' + p.name
-                if p.description.strip():
-                    self.documentation += ': '
-                    self.documentation += p.description.strip()
-                self.documentation += '\\n'
-        if len(help_out_args) > 0:
-            self.documentation += '\\nReturn values:\\n'
-            for p in help_out_args:
-                self.documentation += '    ' + p.name
-                if p.description.strip():
-                    self.documentation += ': '
-                    self.documentation += p.description.strip()
-                self.documentation += '\\n'
-        if self.documentation[-2:] == '\\n':
+            self.documentation = '\\n\\n' + self.description.strip()
+        while self.documentation[-2:] == '\\n':
             self.documentation = self.documentation[:-2]
 
