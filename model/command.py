@@ -8,7 +8,7 @@ class Command(object):
         self.name = node.attrib['name']
 
         descnode = node.find('description')
-        self.description = '' if descnode is None else descnode.text
+        self.description = '' if descnode is None else '' if descnode.text is None else descnode.text
 
         self.clear_stack_after_reading_input = True
         self.clear_stack_before_writing_output = True
