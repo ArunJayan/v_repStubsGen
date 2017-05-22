@@ -15,21 +15,28 @@ with open(outfile, 'w') as fout:
     fout.write('<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n')
     fout.write('<plugin>\n')
 
+    def processTableType(t):
+        if '.' in t:
+            table, itemtype = t.split('.')
+            if table == 'table':
+                return 'table" item-type="%s' % itemtype
+        return t
+
     def output():
         if fun:
             f, fdesc = fun
             fout.write('    <command name="{}">\n'.format(f))
             fout.write('        <description>{}</description>\n'.format(fdesc))
             fout.write('        <params>\n')
-            for (n, d) in args:
-                t = ''
+            for (t, n, d) in args:
+                t = processTableType(t)
                 fout.write('            <param name="{}" type="{}">\n'.format(n, t))
                 fout.write('                <description>{}</description>\n'.format(d))
                 fout.write('            </param>\n')
             fout.write('        </params>\n')
             fout.write('        <return>\n')
-            for (n, d) in rets:
-                t = ''
+            for (t, n, d) in rets:
+                t = processTableType(t)
                 fout.write('            <param name="{}" type="{}">'.format(n, t))
                 fout.write('                <description>{}</description>\n'.format(d))
                 fout.write('            </param>\n')
@@ -38,12 +45,22 @@ with open(outfile, 'w') as fout:
 
     with open(luafile, 'r') as f:
         for line in f:
-            m = re.match(r'\s*--\s*@([^\s]+)\s+([^\s]+)(.*)$', line)
+            m = re.match(r'\s*--\s*@([^\s]+)\s+(.*)$', line)
             if m:
-                key, value, desc = map(lambda s: s.strip(), m.groups())
-                if key == 'fun': fun = (value, desc)
-                elif key == 'arg': args.append((value, desc))
-                elif key == 'ret': rets.append((value, desc))
+                tag, line = map(lambda s: s.strip(), m.groups())
+                if tag == 'fun':
+                    m = re.match(r'([^\s]+)\s*(.*)$', line)
+                    if m:
+                        name, description = map(lambda s: s.strip(), m.groups())
+                        fun = (name, description)
+                elif tag in ('arg', 'ret'):
+                    m = re.match(r'([^\s]+)\s+([^\s]+)\s*(.*)$', line)
+                    if m:
+                        dtype, name, description = map(lambda s: s.strip(), m.groups())
+                        if tag == 'arg':
+                            args.append((dtype, name, description))
+                        elif tag == 'ret':
+                            rets.append((dtype, name, description))
             else:
                 output()
                 fun = None
