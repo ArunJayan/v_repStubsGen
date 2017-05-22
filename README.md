@@ -12,7 +12,7 @@ What you need:
 Usage:
 
 ```
-$ python -m v_repStubsGen -H stubs.h -C stubs.cpp callbacks.xml
+$ python path/to/v_repStubsGen/main.py -H stubs.h -C stubs.cpp callbacks.xml
 ```
 
 generates cpp/h in one shot.
