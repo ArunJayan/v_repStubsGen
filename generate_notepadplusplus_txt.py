@@ -11,7 +11,7 @@ plugin = parse(argv[1])
 functions = []
 variables = []
 
-with open(argv[3], 'w') as ftxt:
+with open(argv[2], 'w') as ftxt:
     for cmd in plugin.commands:
         if plugin.short_name:
             func = 'sim{}.{}'.format(plugin.short_name, cmd.name)
