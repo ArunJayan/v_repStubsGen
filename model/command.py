@@ -50,6 +50,7 @@ class Command(object):
         self.help_out_args_text = ','.join(self.help_out_args_v) + ('=' if help_out_args else '')
         self.help_text = '{}{}{}({})'.format(self.help_out_args_text, plugin.command_prefix, self.name, self.help_in_args_text)
 
+        self.documentation = ''
         if self.description.strip():
             self.documentation = '\\n\\n' + self.description.strip()
             while self.documentation[-2:] == '\\n':
