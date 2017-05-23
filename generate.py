@@ -27,19 +27,21 @@ args = parser.parse_args()
 if args is False:
     SystemExit
 
-def runtool(what, *args):
-    print('running %s' % what)
-    subprocess.call(['python', what + '.py'] + list(args))
-
-def runprogram(what, *args):
-    print('running %s' % what)
-    subprocess.call([what] + list(args))
+self_dir = os.path.dirname(os.path.realpath(__file__))
 
 def output(filename):
     return os.path.join(args.output_dir, filename)
 
 def rel(filename):
-    return os.path.join(os.path.dirname(os.path.realpath(__file__)), filename)
+    return os.path.join(self_dir, filename)
+
+def runtool(what, *args):
+    print('running %s' % what)
+    subprocess.call(['python', rel(what + '.py')] + list(args))
+
+def runprogram(what, *args):
+    print('running %s' % what)
+    subprocess.call([what] + list(args))
 
 # check dependencies & inputs:
 input_xml = args.xml_file
