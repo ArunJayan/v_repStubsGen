@@ -533,65 +533,29 @@ bool registerScriptStuff()
     {
         try
         {
-            simRegisterScriptVariableE("reportedDeprecatedFunctionNames", "{}", -1);
-            simRegisterScriptVariableE("reportDeprecatedFunction",
+        {{if plugin.short_name}}
+            simRegisterScriptVariableE("sim{{plugin.short_name}}", "{}", 0);
+            simRegisterScriptVariableE("sim{{plugin.short_name}}", "require('simExtCustomUI')", 0);
+        {{endif}}
+        {{if plugin.short_name}}
+            simRegisterScriptVariableE("sim{{plugin.short_name}}.reportedDeprecatedFunctionNames", "{}", -1);
+            simRegisterScriptVariableE("sim{{plugin.short_name}}.reportDeprecatedFunction",
                     "function(oldName,newName)\n"
-                    "    if reportedDeprecatedFunctionNames[oldName]~=nil then return end\n"
+                    "    if sim{{plugin.short_name}}.reportedDeprecatedFunctionNames[oldName]~=nil then return end\n"
                     "    msg='WARNING: %s is deprecated, please use %s.'\n"
-                    "    simAddStatusbarMessage(string.format(msg, oldName, newName))\n"
-                    "    reportedDeprecatedFunctionNames[oldName]=true\n"
+                    //"    simAddStatusbarMessage(string.format(msg, oldName, newName))\n"
+                    "    sim{{plugin.short_name}}.reportedDeprecatedFunctionNames[oldName]=true\n"
                     "end", -1);
-            simRegisterScriptVariableE("deprecated",
+            simRegisterScriptVariableE("sim{{plugin.short_name}}.deprecated",
                     "function(oldName,newName,f)\n"
                     "    return function(...)\n"
-                    "        reportDeprecatedFunction(oldName,newName)\n"
+                    "        sim{{plugin.short_name}}.reportDeprecatedFunction(oldName,newName)\n"
                     "        return f(...)\n"
                     "    end\n"
                     "end", -1);
-            // register variables
-        {{for enum in plugin.enums}}
-        {{for item in enum.items}}
-            simRegisterScriptVariableE("sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
-        {{endfor}}
-        {{endfor}}
-
-        {{if plugin.short_name}}
-            // commands _simExt<PLUGIN_NAME>_<COMMAND_NAME> (for internal use)
-        {{for cmd in plugin.commands}}
-            simRegisterScriptCallbackFunctionE("_{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", NULL, {{cmd.name}}_callback);
-        {{endfor}}
-            // commands simExt<PLUGIN_NAME>_<COMMAND_NAME> (depreated)
-        {{for cmd in plugin.commands}}
-            simRegisterScriptVariableE("{{plugin.command_prefix}}{{cmd.name}}", "deprecated('{{plugin.command_prefix}}{{cmd.name}}','sim{{plugin.short_name}}.{{cmd.name}}',_{{plugin.command_prefix}}{{cmd.name}})", -1);
-            simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}\n\n(DEPRECATED, please use sim{{plugin.short_name}}.{{cmd.name}})", 0);
-        {{endfor}}
-        {{else}}
-            // commands simExt<PLUGIN_NAME>_<COMMAND_NAME>
-        {{for cmd in plugin.commands}}
-            simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}{{cmd.documentation}}", {{cmd.name}}_callback);
-        {{endfor}}
         {{endif}}
 
-#if 0
         {{if plugin.short_name}}
-            // register short-version varables
-        {{for enum in plugin.enums}}
-        {{for item in enum.items}}
-            simRegisterScriptVariableE("sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.short_name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
-        {{endfor}}
-        {{endfor}}
-
-            // register short-version commands
-        {{for cmd in plugin.commands}}
-            simRegisterScriptCallbackFunctionE("simExt{{plugin.short_name}}_{{cmd.name}}@{{plugin.name}}", "{{cmd.help_out_args_text}}simExt{{plugin.short_name}}_{{cmd.name}}({{cmd.help_in_args_text}})", {{cmd.name}}_callback);
-        {{endfor}}
-        {{endif}}
-#endif
-
-        {{if plugin.short_name}}
-            // new style (OO-like) stuff:
-            simRegisterScriptVariableE("sim{{plugin.short_name}}", "{}", 0);
-            simRegisterScriptVariableE("sim{{plugin.short_name}}", "require('simExtCustomUI')", 0);
             // register new-style short-version varables
         {{for enum in plugin.enums}}
             simRegisterScriptVariableE("sim{{plugin.short_name}}.{{enum.name}}", "{}", 0);
@@ -601,10 +565,36 @@ bool registerScriptStuff()
         {{endfor}}
             // register new-style short-version commands
         {{for cmd in plugin.commands}}
-            simRegisterScriptVariableE("sim{{plugin.short_name}}.{{cmd.name}}", "_{{plugin.command_prefix}}{{cmd.name}}", -1);
-            simRegisterScriptCallbackFunctionE("sim{{plugin.short_name}}.{{cmd.name}}@{{plugin.name}}", "{{cmd.help_out_args_text}}sim{{plugin.short_name}}.{{cmd.name}}({{cmd.help_in_args_text}}){{cmd.documentation}}", 0);
+            simRegisterScriptCallbackFunctionE("sim{{plugin.short_name}}.{{cmd.name}}@{{plugin.name}}", "{{cmd.help_out_args_text}}sim{{plugin.short_name}}.{{cmd.name}}({{cmd.help_in_args_text}}){{cmd.documentation}}", {{cmd.name}}_callback);
         {{endfor}}
         {{endif}}
+
+
+        {{if plugin.short_name}}
+            // commands simExt<PLUGIN_NAME>_<COMMAND_NAME> (depreated)
+        {{for cmd in plugin.commands}}
+            simRegisterScriptVariableE("{{plugin.command_prefix}}{{cmd.name}}", "deprecated('{{plugin.command_prefix}}{{cmd.name}}','sim{{plugin.short_name}}.{{cmd.name}}',sim{{plugin.short_name}}.{{cmd.name}})", -1);
+            simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}\n\n(DEPRECATED, please use sim{{plugin.short_name}}.{{cmd.name}})", 0);
+        {{endfor}}
+            // register variables (deprecated)
+        {{for enum in plugin.enums}}
+        {{for item in enum.items}}
+            simRegisterScriptVariableE("sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), -1);
+        {{endfor}}
+        {{endfor}}
+        {{else}}
+            // commands simExt<PLUGIN_NAME>_<COMMAND_NAME>
+        {{for cmd in plugin.commands}}
+            simRegisterScriptCallbackFunctionE("{{plugin.command_prefix}}{{cmd.name}}@{{plugin.name}}", "{{cmd.help_text}}{{cmd.documentation}}", {{cmd.name}}_callback);
+        {{endfor}}
+            // register variables
+        {{for enum in plugin.enums}}
+        {{for item in enum.items}}
+            simRegisterScriptVariableE("sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}}", (boost::lexical_cast<std::string>(sim_{{plugin.name.lower()}}_{{enum.item_prefix}}{{item}})).c_str(), 0);
+        {{endfor}}
+        {{endfor}}
+        {{endif}}
+
         }
         CATCH_AND_RETHROW("Initialization failed (registerScriptStuff): ")
     }
