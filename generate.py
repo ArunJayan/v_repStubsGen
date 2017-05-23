@@ -54,6 +54,13 @@ if args.gen_all:
     args.gen_notepadplusplus_stuff = True
     args.gen_deprecated_txt = True
 
+# create output dir fi needed:
+try:
+    os.makedirs(args.output_dir)
+except OSError as exc:
+    if exc.errno == errno.EEXIST and os.path.isdir(args.output_dir):
+        pass
+
 plugin = parse(args.xml_file)
 
 if args.gen_stubs:
