@@ -535,7 +535,7 @@ bool registerScriptStuff()
         {
         {{if plugin.short_name}}
             simRegisterScriptVariableE("sim{{plugin.short_name}}", "{}", 0);
-            simRegisterScriptVariableE("sim{{plugin.short_name}}", "require('simExtCustomUI')", 0);
+            simRegisterScriptVariableE("sim{{plugin.short_name}}", "require('simExt{{plugin.name}}')", 0);
         {{endif}}
         {{if plugin.short_name}}
             simRegisterScriptVariableE("sim{{plugin.short_name}}.reportedDeprecatedFunctionNames", "{}", -1);
