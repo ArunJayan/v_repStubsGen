@@ -531,6 +531,17 @@ bool registerScriptStuff()
 {
     try
     {
+        {
+            simInt vrepVer = 0, vrepRev = 0, vrepMinVer = 30400, vrepMinRev = 9;
+            simGetIntegerParameter(sim_intparam_program_version, &vrepVer);
+            simGetIntegerParameter(sim_intparam_program_revision, &vrepRev);
+            if(vrepVer < vrepMinVer || (vrepVer == vrepMinVer && vrepRev < vrepMinRev))
+            {
+                std::stringstream ss;
+                ss << "this plugin requires at least V-REP " << (vrepMinVer / 10000) << "." << (vrepMinVer / 100 % 100) << "." << (vrepMinVer % 100) << " rev" << vrepMinRev;
+                throw std::runtime_error(ss.str());
+            }
+        }
         try
         {
         {{if plugin.short_name}}
