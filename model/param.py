@@ -85,7 +85,7 @@ class ParamString(Param):
 
     def hdefault(self):
         if self.default is None: return None
-        return self.cdefault().replace('\\','\\\\').replace('"','\\"')
+        return "'%s'" % self.default.replace('\\','\\\\').replace('"','\\"')
 
 class ParamBool(Param):
     def __init__(self, node):
