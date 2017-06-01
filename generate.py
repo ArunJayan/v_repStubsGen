@@ -76,7 +76,8 @@ except OSError as exc:
 plugin = parse(args.xml_file)
 
 if args.gen_stubs:
-    runtool('main', '-C', output('stubs.cpp'), '-H', output('stubs.h'), args.xml_file)
+    for ext in ('cpp', 'h'):
+        runtool('pycpp', '-p', 'xml_file=' + args.xml_file, '-i', rel('cpp/stubs.' + ext), '-o', output('stubs.' + ext))
 
 if args.gen_lua_xml:
     if not args.lua_file:
