@@ -35,22 +35,20 @@ def output(filename):
 def rel(filename):
     return os.path.join(self_dir, filename)
 
-def runtool(what, *args):
-    print('running %s' % what)
-    child = subprocess.Popen(['python', rel(what + '.py')] + list(args))
+def runsubprocess(what, args):
+    child = subprocess.Popen(args)
     child.communicate()
     if child.returncode != 0:
         print('failed to run %s' % what)
         sys.exit(1)
 
+def runtool(what, *args):
+    print('running %s' % what)
+    runsubprocess(what, ['python', rel(what + '.py')] + list(args))
 
 def runprogram(what, *args):
     print('running %s' % what)
-    child = subprocess.Popen([what] + list(args))
-    child.communicate()
-    if child.returncode != 0:
-        print('failed to run %s' % what)
-        sys.exit(1)
+    runsubprocess(what, [what] + list(args))
 
 # check dependencies & inputs:
 input_xml = args.xml_file
