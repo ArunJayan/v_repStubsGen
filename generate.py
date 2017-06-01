@@ -36,7 +36,9 @@ def rel(filename):
     return os.path.join(self_dir, filename)
 
 def runsubprocess(what, args):
-    child = subprocess.Popen(args)
+    childenv = os.environ.copy()
+    childenv['PYTHONPATH'] = childenv['PYTHONPATH'] + os.pathsep + self_dir
+    child = subprocess.Popen(args, env=childenv)
     child.communicate()
     if child.returncode != 0:
         print('failed to run %s' % what)
