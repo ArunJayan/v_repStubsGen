@@ -37,11 +37,20 @@ def rel(filename):
 
 def runtool(what, *args):
     print('running %s' % what)
-    subprocess.call(['python', rel(what + '.py')] + list(args))
+    child = subprocess.Popen(['python', rel(what + '.py')] + list(args))
+    child.communicate()
+    if child.returncode != 0:
+        print('failed to run %s' % what)
+        sys.exit(1)
+
 
 def runprogram(what, *args):
     print('running %s' % what)
-    subprocess.call([what] + list(args))
+    child = subprocess.Popen([what] + list(args))
+    child.communicate()
+    if child.returncode != 0:
+        print('failed to run %s' % what)
+        sys.exit(1)
 
 # check dependencies & inputs:
 input_xml = args.xml_file
