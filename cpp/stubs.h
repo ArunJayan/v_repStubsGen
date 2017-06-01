@@ -127,12 +127,12 @@ struct `cmd.name`_out
 
 void `cmd.name`(SScriptCallBack *p, `cmd.name`_in *in, `cmd.name`_out *out);
 #py if len(cmd.returns) == 1:
-`cmd.returns[0].ctype()` `cmd.name`(SScriptCallBack *p`''.join(', {} {}{}'.format(p.ctype(), p.name, ' = {}'.format(p.cdefault()) if p.cdefault() else '') for p in cmd.params)`);
+`cmd.returns[0].ctype()` `cmd.name`(SScriptCallBack *p`''.join(', {}'.format(p.declaration_with_default()) for p in cmd.params)`);
 #py endif
 #py if len(cmd.returns) == 0:
-void `cmd.name`(SScriptCallBack *p`''.join(', {} {}{}'.format(p.ctype(), p.name, ' = {}'.format(p.cdefault()) if p.cdefault() else '') for p in cmd.params)`);
+void `cmd.name`(SScriptCallBack *p`''.join(', {}'.format(p.declaration_with_default()) for p in cmd.params)`);
 #py endif
-void `cmd.name`(SScriptCallBack *p, `cmd.name`_out *out`''.join(', {} {}{}'.format(p.ctype(), p.name, ' = {}'.format(p.cdefault()) if p.cdefault() else '') for p in cmd.params)`);
+void `cmd.name`(SScriptCallBack *p, `cmd.name`_out *out`''.join(', {}'.format(p.declaration_with_default()) for p in cmd.params)`);
 void `cmd.name`_callback(SScriptCallBack *p);
 
 #py endfor
@@ -156,10 +156,10 @@ struct `fn.name`_out
 };
 
 #py if len(fn.returns) == 1:
-`fn.returns[0].ctype()` `fn.name`(simInt scriptId, const char *func`''.join(', {} {}'.format(p.ctype(), p.name) for p in fn.params)`);
+`fn.returns[0].ctype()` `fn.name`(simInt scriptId, const char *func`''.join(', {}'.format(p.declaration_with_default()) for p in fn.params)`);
 #py endif
 #py if len(fn.returns) == 0:
-void `fn.name`(simInt scriptId, const char *func`''.join(', {} {}'.format(p.ctype(), p.name) for p in fn.params)`);
+void `fn.name`(simInt scriptId, const char *func`''.join(', {}'.format(p.declaration_with_default()) for p in fn.params)`);
 #py endif
 bool `fn.name`(simInt scriptId, const char *func, `fn.name`_in *in_args, `fn.name`_out *out_args);
 

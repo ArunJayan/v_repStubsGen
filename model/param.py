@@ -51,6 +51,12 @@ class Param(object):
             print('ERROR: type "{}" not found in mapping; valid types are: {}'.format(dtype, ', '.join('"%s"' % k for k in Param.mapping.keys())))
         return Param.mapping[dtype](node)
 
+    def declaration(self):
+        return '{} {}'.format(self.ctype(), self.name)
+
+    def declaration_with_default(self):
+        return self.declaration() + (' = {}'.format(self.cdefault()) if self.cdefault() else '')
+
 class ParamInt(Param):
     def __init__(self, node):
         super(ParamInt, self).__init__(node)
