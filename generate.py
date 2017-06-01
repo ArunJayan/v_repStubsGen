@@ -77,7 +77,7 @@ plugin = parse(args.xml_file)
 
 if args.gen_stubs:
     for ext in ('cpp', 'h'):
-        runtool('pycpp', '-p', 'xml_file=' + args.xml_file, '-i', rel('cpp/stubs.' + ext), '-o', output('stubs.' + ext))
+        runtool('external/pycpp/pycpp', '-p', 'xml_file=' + args.xml_file, '-i', rel('cpp/stubs.' + ext), '-o', output('stubs.' + ext))
 
 if args.gen_lua_xml:
     if not args.lua_file:
