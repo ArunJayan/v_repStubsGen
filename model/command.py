@@ -56,3 +56,9 @@ class Command(object):
             while self.documentation[-2:] == '\\n':
                 self.documentation = self.documentation[:-2]
 
+    def c_arg_list(self, defaults=False, pre_args=[], post_args=[]):
+        if isinstance(pre_args, str): pre_args = [pre_args]
+        if isinstance(post_args, str): post_args = [post_args]
+        args = [p.declaration_with_default() if defaults else p.declaration() for p in self.params]
+        args = list(pre_args) + args + list(post_args)
+        return ', '.join(args)

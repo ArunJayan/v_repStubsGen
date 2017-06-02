@@ -643,7 +643,7 @@ void `cmd.name`(SScriptCallBack *p, `cmd.name`_in *in_args, `cmd.name`_out *out_
 }
 
 #py if len(cmd.returns) == 1:
-`cmd.returns[0].ctype()` `cmd.name`(SScriptCallBack *p`''.join(', {}'.format(p.declaration()) for p in cmd.params)`)
+`cmd.returns[0].ctype()` `cmd.name`(`cmd.c_arg_list(pre_args=['SScriptCallBack *p'])`)
 {
     `cmd.name`_in in_args;
 #py for p in cmd.params:
@@ -656,7 +656,7 @@ void `cmd.name`(SScriptCallBack *p, `cmd.name`_in *in_args, `cmd.name`_out *out_
 
 #py endif
 #py if len(cmd.returns) == 0:
-void `cmd.name`(SScriptCallBack *p`''.join(', {}'.format(p.declaration()) for p in cmd.params)`)
+void `cmd.name`(`cmd.c_arg_list(pre_args=['SScriptCallBack *p'])`)
 {
     `cmd.name`_in in_args;
 #py for p in cmd.params:
@@ -667,7 +667,7 @@ void `cmd.name`(SScriptCallBack *p`''.join(', {}'.format(p.declaration()) for p 
 }
 
 #py endif
-void `cmd.name`(SScriptCallBack *p, `cmd.name`_out *out_args`''.join(', {}'.format(p.declaration()) for p in cmd.params)`)
+void `cmd.name`(`cmd.c_arg_list(pre_args=['SScriptCallBack *p', '%s_out *out_args' % cmd.name])`)
 {
     `cmd.name`_in in_args;
 #py for p in cmd.params:
