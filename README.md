@@ -7,7 +7,6 @@ functions, and enums, and it produces a pair of C++ source/header files.
 What you need:
 - Python interpreter (2.7 or greater)
 - lxml package for Python (available from pip)
-- tempita package for Python (available from pip)
 
 Usage:
 
