@@ -7,6 +7,7 @@ functions, and enums, and it produces a pair of C++ source/header files.
 What you need:
 - Python interpreter (2.7 or greater)
 - lxml package for Python (available from pip)
+- xsltproc program in your PATH (an XSLT processor) if you want to generate documentation
 
 Usage:
 
