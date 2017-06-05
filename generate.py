@@ -36,9 +36,7 @@ def rel(filename):
     return os.path.join(self_dir, filename)
 
 def runsubprocess(what, args):
-    childenv = os.environ.copy()
-    childenv['PYTHONPATH'] = childenv['PYTHONPATH'] + os.pathsep + self_dir
-    child = subprocess.Popen(args, env=childenv)
+    child = subprocess.Popen(args)
     child.communicate()
     if child.returncode != 0:
         print('failed to run %s' % what)
@@ -77,7 +75,7 @@ plugin = parse(args.xml_file)
 
 if args.gen_stubs:
     for ext in ('cpp', 'h'):
-        runtool('external/pycpp/pycpp', '-p', 'xml_file=' + args.xml_file, '-i', rel('cpp/stubs.' + ext), '-o', output('stubs.' + ext))
+        runtool('external/pycpp/pycpp', '-p', 'xml_file=' + args.xml_file, '-i', rel('cpp/stubs.' + ext), '-o', output('stubs.' + ext), '-P', self_dir)
 
 if args.gen_lua_xml:
     if not args.lua_file:
