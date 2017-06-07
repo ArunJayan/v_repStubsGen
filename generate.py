@@ -91,7 +91,10 @@ if args.gen_reference_xml:
         runtool('merge_xml', args.xml_file, output('lua.xml'), output('reference.xml'))
 
 if args.gen_reference_html:
-    runprogram('xsltproc', '-o', output('reference.html'), rel('xsl/reference.xsl'), input_xml)
+    if os.name == 'nt':
+        print('skipping xsltproc because a known bug on Windows')
+    else:
+        runprogram('xsltproc', '-o', output('reference.html'), rel('xsl/reference.xsl'), input_xml)
 
 if args.gen_lua_calltips:
     if not plugin.short_name:
