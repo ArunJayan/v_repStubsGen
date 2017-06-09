@@ -1,5 +1,4 @@
 import argparse
-import tempita
 import os
 import os.path
 import errno
