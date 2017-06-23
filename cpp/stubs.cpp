@@ -370,7 +370,10 @@ void read__`struct.name`(int stack, `struct.name` *value)
         if(info == sim_stack_table_empty)
             return;
         if(info != sim_stack_table_map)
+        {
+            simDebugStack(stack, -1);
             throw exception("expected a table");
+        }
 
         int oldsz = simGetStackSizeE(stack);
         simUnfoldStackTableE(stack);
@@ -399,7 +402,10 @@ void read__`struct.name`(int stack, `struct.name` *value)
                         simMoveStackItemToTopE(stack, 0);
                         int i = simGetStackTableInfoE(stack, 0);
                         if(i < 0)
-                            throw exception("expected array");
+                        {
+                            simDebugStack(stack, -1);
+                            throw exception((boost::format("expected array (simGetStackTableInfo(stack, 0) returned %d)") % i).str());
+                        }
                         int oldsz = simGetStackSizeE(stack);
                         simUnfoldStackTableE(stack);
                         int sz = (simGetStackSizeE(stack) - oldsz + 1) / 2;
@@ -711,9 +717,14 @@ void `cmd.name`_callback(SScriptCallBack *p)
                 simMoveStackItemToTopE(p->stackID, 0);
                 int sz = simGetStackTableInfoE(p->stackID, 0);
                 if(sz < 0)
-                    throw exception("expected array");
+                {
+                    simDebugStack(p->stackID, -1);
+                    throw exception((boost::format("expected array (simGetStackTableInfo returned %d)") % sz).str());
+                }
                 if(simGetStackTableInfoE(p->stackID, 2) != 1)
-                    throw exception("fast_write_type reader exception #1");
+                {
+                    throw exception("fast_write_type reader exception #1 (simGetStackTableInfo(stack, 2) returned error)");
+                }
                 in_args.`p.name`.resize(sz);
 #py if p.itype == 'float':
                 simGetStackFloatTableE(p->stackID, &(in_args.`p.name`[0]), sz);
@@ -728,7 +739,10 @@ void `cmd.name`_callback(SScriptCallBack *p)
                 simMoveStackItemToTopE(p->stackID, 0);
                 int i = simGetStackTableInfoE(p->stackID, 0);
                 if(i < 0)
-                    throw exception("error reading input argument `i+1` (`p.name`): expected array");
+                {
+                    simDebugStack(p->stackID, -1);
+                    throw exception((boost::format("error reading input argument `i+1` (`p.name`): expected array (simGetStackTableInfo(stack, 0) returned %d)") % i).str());
+                }
                 int oldsz = simGetStackSizeE(p->stackID);
                 simUnfoldStackTableE(p->stackID);
                 int sz = (simGetStackSizeE(p->stackID) - oldsz + 1) / 2;
@@ -921,7 +935,10 @@ bool `fn.name`(simInt scriptId, const char *func, `fn.name`_in *in_args, `fn.nam
             simMoveStackItemToTopE(stackID, 0);
             int i = simGetStackTableInfoE(stackID, 0);
             if(i < 0)
-                throw exception("expected array");
+            {
+                simDebugStack(stackID, -1);
+                throw exception((boost::format("expected array (simGetStackTableInfo(stack, 0) returned %d)") % i).str());
+            }
             int oldsz = simGetStackSizeE(stackID);
             simUnfoldStackTableE(stackID);
             int sz = (simGetStackSizeE(stackID) - oldsz + 1) / 2;
