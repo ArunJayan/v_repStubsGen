@@ -413,6 +413,10 @@ void read__`struct.name`(int stack, `struct.name` *value)
                             read__`field.ctype_normalized()`(stack, &v);
                             value->`field.name`.push_back(v);
                         }
+#py if field.minsize > 0 and field.minsize == field.maxsize:
+                        if(value->`field.name`.size() != `field.minsize`)
+                            throw exception("must have exactly `field.minsize` elements");
+#py else:
 #py if field.minsize > 0:
                         if(value->`field.name`.size() < `field.minsize`)
                             throw exception("must have at least `field.minsize` elements");
@@ -420,6 +424,7 @@ void read__`struct.name`(int stack, `struct.name` *value)
 #py if field.maxsize is not None:
                         if(value->`field.name`.size() > `field.maxsize`)
                             throw exception("must have at most `field.maxsize` elements");
+#py endif
 #py endif
 #py else:
                         // read field '`field.name`' of type `field.ctype()`
@@ -739,6 +744,10 @@ void `cmd.name`_callback(SScriptCallBack *p)
                 }
 #py endif
 
+#py if p.minsize > 0 and p.minsize == p.maxsize:
+                if(in_args.`p.name`.size() != `p.minsize`)
+                    throw exception("argument `i+1` (`p.name`) array must have exactly `p.minsize` elements");
+#py else:
 #py if p.minsize > 0:
                 if(in_args.`p.name`.size() < `p.minsize`)
                     throw exception("argument `i+1` (`p.name`) array must have at least `p.minsize` elements");
@@ -746,6 +755,7 @@ void `cmd.name`_callback(SScriptCallBack *p)
 #py if p.maxsize is not None:
                 if(in_args.`p.name`.size() > `p.maxsize`)
                     throw exception("argument `i+1` (`p.name`) array must have at most `p.maxsize` elements");
+#py endif
 #py endif
 #py else:
                 // read input argument `i+1` (`p.name`) of type `p.ctype()`
@@ -925,6 +935,10 @@ bool `fn.name`(simInt scriptId, const char *func, `fn.name`_in *in_args, `fn.nam
                 read__`p.ctype_normalized()`(stackID, &v);
                 out_args->`p.name`.push_back(v);
             }
+#py if p.minsize > 0 and p.minsize == p.maxsize:
+            if(out_args->`p.name`.size() != `p.minsize`)
+                throw exception("must have exactly `p.minsize` elements");
+#py else:
 #py if p.minsize > 0:
             if(out_args->`p.name`.size() < `p.minsize`)
                 throw exception("must have at least `p.minsize` elements");
@@ -932,6 +946,7 @@ bool `fn.name`(simInt scriptId, const char *func, `fn.name`_in *in_args, `fn.nam
 #py if p.maxsize is not None:
             if(out_args->`p.name`.size() > `p.maxsize`)
                 throw exception("must have at most `p.maxsize` elements");
+#py endif
 #py endif
 #py else:
             // read output argument `i+1` (`p.name`) of type `p.ctype()`
