@@ -3,8 +3,10 @@
 #py plugin = parse(pycpp.params['xml_file'])
 #include "stubs.h"
 
+#include <cstdlib>
 #include <iostream>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 
 #define CATCH_AND_RETHROW(prefix)   \
@@ -27,6 +29,14 @@
         msg << "error #" << n;      \
         throw exception(msg.str()); \
     }
+
+bool isDebugStubsEnabled()
+{
+    char *val = std::getenv("DEBUG_STUBS");
+    if(!val) return false;
+    int v = boost::lexical_cast<int>(val);
+    return v != 0;
+}
 
 simInt simRegisterScriptCallbackFunctionE(const simChar *funcNameAtPluginName, const simChar *callTips, simVoid (*callBack)(struct SScriptCallBack *cb))
 {
@@ -60,6 +70,11 @@ simVoid simCallScriptFunctionExE(simInt scriptHandleOrType,const simChar* functi
 
 simInt simCreateStackE()
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simCreateStack()" << std::endl;
+    }
+
     simInt ret = simCreateStack();
     if(ret == -1)
         throw exception("simCreateStack: error");
@@ -68,12 +83,22 @@ simInt simCreateStackE()
 
 simVoid simReleaseStackE(simInt stackHandle)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simReleaseStack(stack)" << std::endl;
+    }
+
     if(simReleaseStack(stackHandle) != 1)
         throw exception("simReleaseStack: error");
 }
 
 simInt simCopyStackE(simInt stackHandle)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simCopyStack(stack)" << std::endl;
+    }
+
     simInt ret = simCopyStack(stackHandle);
     if(ret == -1)
         throw exception("simCopyStack: error");
@@ -82,72 +107,132 @@ simInt simCopyStackE(simInt stackHandle)
 
 simVoid simPushNullOntoStackE(simInt stackHandle)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushNullOntoStack(stack)" << std::endl;
+    }
+
     if(simPushNullOntoStack(stackHandle) == -1)
         throw exception("simPushNullOntoStack: error");
 }
 
 simVoid simPushBoolOntoStackE(simInt stackHandle, simBool value)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushBoolOntoStack(stack, " << value << ")" << std::endl;
+    }
+
     if(simPushBoolOntoStack(stackHandle, value) == -1)
         throw exception("simPushBoolOntoStack: error");
 }
 
 simVoid simPushInt32OntoStackE(simInt stackHandle, simInt value)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushInt32OntoStack(stack, " << value << ")" << std::endl;
+    }
+
     if(simPushInt32OntoStack(stackHandle, value) == -1)
         throw exception("simPushInt32OntoStack: error");
 }
 
 simVoid simPushFloatOntoStackE(simInt stackHandle, simFloat value)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushFloatOntoStack(stack, " << value << ")" << std::endl;
+    }
+
     if(simPushFloatOntoStack(stackHandle, value) == -1)
         throw exception("simPushFloatOntoStack: error");
 }
 
 simVoid simPushDoubleOntoStackE(simInt stackHandle, simDouble value)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushDoubleOntoStack(stack, " << value << ")" << std::endl;
+    }
+
     if(simPushDoubleOntoStack(stackHandle, value) == -1)
         throw exception("simPushDoubleOntoStack: error");
 }
 
 simVoid simPushStringOntoStackE(simInt stackHandle, const simChar *value, simInt stringSize)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushStringOntoStack(stack, \"" << value << "\" [" << stringSize << "])" << std::endl;
+    }
+
     if(simPushStringOntoStack(stackHandle, value, stringSize) == -1)
         throw exception("simPushStringOntoStack: error");
 }
 
 simVoid simPushUInt8TableOntoStackE(simInt stackHandle, const simUChar *values, simInt valueCnt)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushUInt8TableOntoStack(stack, <" << valueCnt << " values>)" << std::endl;
+    }
+
     if(simPushUInt8TableOntoStack(stackHandle, values, valueCnt) == -1)
         throw exception("simPushUInt8TableOntoStack: error");
 }
 
 simVoid simPushInt32TableOntoStackE(simInt stackHandle, const simInt *values, simInt valueCnt)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushInt32TableOntoStack(stack, <" << valueCnt << " values>)" << std::endl;
+    }
+
     if(simPushInt32TableOntoStack(stackHandle, values, valueCnt) == -1)
         throw exception("simPushInt32TableOntoStack: error");
 }
 
 simVoid simPushFloatTableOntoStackE(simInt stackHandle, const simFloat *values, simInt valueCnt)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushFloatTableOntoStack(stack, <" << valueCnt << " values>)" << std::endl;
+    }
+
     if(simPushFloatTableOntoStack(stackHandle, values, valueCnt) == -1)
         throw exception("simPushFloatTableOntoStack: error");
 }
 
 simVoid simPushDoubleTableOntoStackE(simInt stackHandle, const simDouble *values, simInt valueCnt)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushDoubleTableOntoStack(stack, <" << valueCnt << " values>)" << std::endl;
+    }
+
     if(simPushDoubleTableOntoStack(stackHandle, values, valueCnt) == -1)
         throw exception("simPushDoubleTableOntoStack: error");
 }
 
 simVoid simPushTableOntoStackE(simInt stackHandle)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPushTableOntoStack(stack)" << std::endl;
+    }
+
     if(simPushTableOntoStack(stackHandle) == -1)
         throw exception("simPushTableOntoStack: error");
 }
 
 simVoid simInsertDataIntoStackTableE(simInt stackHandle)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simInsertDataIntoStackTable(stack)" << std::endl;
+    }
+
     if(simInsertDataIntoStackTable(stackHandle) == -1)
         throw exception("simInsertDataIntoStackTable: error");
 }
@@ -155,6 +240,12 @@ simVoid simInsertDataIntoStackTableE(simInt stackHandle)
 simInt simGetStackSizeE(simInt stackHandle)
 {
     simInt ret = simGetStackSize(stackHandle);
+
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simGetStackSize(stack) -> " << ret << std::endl;
+    }
+
     if(ret == -1)
         throw exception("simGetStackSize: error");
     return ret;
@@ -163,6 +254,12 @@ simInt simGetStackSizeE(simInt stackHandle)
 simInt simPopStackItemE(simInt stackHandle, simInt count)
 {
     simInt ret = simPopStackItem(stackHandle, count);
+
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simPopStackItem(stack, " << count << ") -> " << ret << std::endl;
+    }
+
     if(ret == -1)
         throw exception("simPopStackItem: error");
     return ret;
@@ -170,6 +267,11 @@ simInt simPopStackItemE(simInt stackHandle, simInt count)
 
 simVoid simMoveStackItemToTopE(simInt stackHandle, simInt cIndex)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simMoveStackItemToTop(stack, " << cIndex << ")" << std::endl;
+    }
+
     if(simMoveStackItemToTop(stackHandle, cIndex) == -1)
         throw exception("simMoveStackItemToTop: error");
 }
@@ -226,6 +328,12 @@ simChar* simGetStackStringValueE(simInt stackHandle, simInt *stringSize)
 simInt simGetStackTableInfoE(simInt stackHandle, simInt infoType)
 {
     simInt ret = simGetStackTableInfo(stackHandle, infoType);
+
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simGetStackTableInfo(stack, " << infoType << ") -> " << ret << std::endl;
+    }
+
     if(ret == -1)
         throw exception("simGetStackTableInfo: error");
     return ret;
@@ -265,6 +373,11 @@ simInt simGetStackDoubleTableE(simInt stackHandle, simDouble *array, simInt coun
 
 simVoid simUnfoldStackTableE(simInt stackHandle)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: simUnfoldStackTable(stack)" << std::endl;
+    }
+
     if(simUnfoldStackTable(stackHandle) == -1)
         throw exception("simUnfoldStackTable: error");
 }
@@ -366,6 +479,11 @@ void read__std__string(int stack, std::string *value)
 #py for struct in plugin.structs:
 void read__`struct.name`(int stack, `struct.name` *value)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: reading struct \"`struct.name`\"..." << std::endl;
+    }
+
     try
     {
         simInt info = simGetStackTableInfoE(stack, 0);
@@ -373,7 +491,8 @@ void read__`struct.name`(int stack, `struct.name` *value)
             return;
         if(info != sim_stack_table_map)
         {
-            simDebugStack(stack, -1);
+            if(isDebugStubsEnabled())
+                simDebugStack(stack, -1);
             throw exception("expected a table");
         }
 
@@ -405,7 +524,8 @@ void read__`struct.name`(int stack, `struct.name` *value)
                         int i = simGetStackTableInfoE(stack, 0);
                         if(i < 0)
                         {
-                            simDebugStack(stack, -1);
+                            if(isDebugStubsEnabled())
+                                simDebugStack(stack, -1);
                             throw exception((boost::format("expected array (simGetStackTableInfo(stack, 0) returned %d)") % i).str());
                         }
                         int oldsz = simGetStackSizeE(stack);
@@ -489,6 +609,11 @@ void write__std__string(std::string value, int stack)
 #py for struct in plugin.structs:
 void write__`struct.name`(`struct.name` *value, int stack)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: writing struct \"`struct.name`\"..." << std::endl;
+    }
+
     try
     {
         simPushTableOntoStackE(stack);
@@ -691,6 +816,13 @@ void `cmd.name`(`cmd.c_arg_list(pre_args=['SScriptCallBack *p', '%s_out *out_arg
 
 void `cmd.name`_callback(SScriptCallBack *p)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: script callback for \"`cmd.name`\"..." << std::endl;
+        std::cout << "DEBUG_STUBS: reading input arguments..." << std::endl;
+        simDebugStack(p->stackID, -1);
+    }
+
     const char *cmd = "`plugin.command_prefix``cmd.name`";
 
     `cmd.name`_in in_args;
@@ -720,7 +852,8 @@ void `cmd.name`_callback(SScriptCallBack *p)
                 int sz = simGetStackTableInfoE(p->stackID, 0);
                 if(sz < 0)
                 {
-                    simDebugStack(p->stackID, -1);
+                    if(isDebugStubsEnabled())
+                        simDebugStack(p->stackID, -1);
                     throw exception((boost::format("expected array (simGetStackTableInfo(stack, 0) returned %d)") % sz).str());
                 }
                 if(simGetStackTableInfoE(p->stackID, 2) != 1)
@@ -742,7 +875,8 @@ void `cmd.name`_callback(SScriptCallBack *p)
                 int i = simGetStackTableInfoE(p->stackID, 0);
                 if(i < 0)
                 {
-                    simDebugStack(p->stackID, -1);
+                    if(isDebugStubsEnabled())
+                        simDebugStack(p->stackID, -1);
                     throw exception((boost::format("error reading input argument `i+1` (`p.name`): expected array (simGetStackTableInfo(stack, 0) returned %d)") % i).str());
                 }
                 int oldsz = simGetStackSizeE(p->stackID);
@@ -783,6 +917,10 @@ void `cmd.name`_callback(SScriptCallBack *p)
         }
 
 #py endfor
+
+        if(isDebugStubsEnabled())
+            simDebugStack(p->stackID, -1);
+
 #py if cmd.clear_stack_after_reading_input:
         // clear stack
         simPopStackItemE(p->stackID, 0);
@@ -816,6 +954,12 @@ void `cmd.name`_callback(SScriptCallBack *p)
 
     try
     {
+        if(isDebugStubsEnabled())
+        {
+            std::cout << "DEBUG_STUBS: writing output arguments..." << std::endl;
+            simDebugStack(p->stackID, -1);
+        }
+
 #py if cmd.clear_stack_before_writing_output:
         // clear stack
         simPopStackItemE(p->stackID, 0);
@@ -843,6 +987,9 @@ void `cmd.name`_callback(SScriptCallBack *p)
         }
         CATCH_AND_RETHROW("write out arg `i+1` (`p.name`): ")
 #py endfor
+
+        if(isDebugStubsEnabled())
+            simDebugStack(p->stackID, -1);
     }
     catch(std::exception& e)
     {
@@ -897,6 +1044,12 @@ void `cmd.name`_callback(SScriptCallBack *p)
 
 bool `fn.name`(simInt scriptId, const char *func, `fn.name`_in *in_args, `fn.name`_out *out_args)
 {
+    if(isDebugStubsEnabled())
+    {
+        std::cout << "DEBUG_STUBS: script callback function for \"`fn.name`\"..." << std::endl;
+        std::cout << "DEBUG_STUBS: writing input arguments..." << std::endl;
+    }
+
     int stackID = -1;
 
     try
@@ -925,9 +1078,15 @@ bool `fn.name`(simInt scriptId, const char *func, `fn.name`_in *in_args, `fn.nam
         CATCH_AND_RETHROW("writing input argument `i+1` (`p.name`): ")
 #py endfor
 
+        if(isDebugStubsEnabled())
+            simDebugStack(stackID, -1);
+
         simCallScriptFunctionExE(scriptId, func, stackID);
 
         // read output arguments from stack
+
+        if(isDebugStubsEnabled())
+            std::cout << "DEBUG_STUBS: reading output arguments..." << std::endl;
 
 #py for i, p in enumerate(fn.returns):
         try
@@ -938,7 +1097,8 @@ bool `fn.name`(simInt scriptId, const char *func, `fn.name`_in *in_args, `fn.nam
             int i = simGetStackTableInfoE(stackID, 0);
             if(i < 0)
             {
-                simDebugStack(stackID, -1);
+                if(isDebugStubsEnabled())
+                    simDebugStack(stackID, -1);
                 throw exception((boost::format("expected array (simGetStackTableInfo(stack, 0) returned %d)") % i).str());
             }
             int oldsz = simGetStackSizeE(stackID);
@@ -974,6 +1134,9 @@ bool `fn.name`(simInt scriptId, const char *func, `fn.name`_in *in_args, `fn.nam
         }
         CATCH_AND_RETHROW("read out arg `i+1` (`p.name`): ")
 #py endfor
+
+        if(isDebugStubsEnabled())
+            simDebugStack(stackID, -1);
 
         simReleaseStackE(stackID);
         stackID = -1;
