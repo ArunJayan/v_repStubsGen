@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+#include <boost/format.hpp>
+
 #define CATCH_AND_RETHROW(prefix)   \
     catch(std::exception &ex)       \
     {                               \
