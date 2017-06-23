@@ -721,7 +721,7 @@ void `cmd.name`_callback(SScriptCallBack *p)
                 if(sz < 0)
                 {
                     simDebugStack(p->stackID, -1);
-                    throw exception((boost::format("expected array (simGetStackTableInfo returned %d)") % sz).str());
+                    throw exception((boost::format("expected array (simGetStackTableInfo(stack, 0) returned %d)") % sz).str());
                 }
                 if(simGetStackTableInfoE(p->stackID, 2) != 1)
                 {
