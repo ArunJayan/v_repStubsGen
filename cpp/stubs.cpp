@@ -951,7 +951,7 @@ void `cmd.name`_callback(SScriptCallBack *p)
                     if(isDebugStubsEnabled())
                         simDebugStack(p->stackID, -1);
 #endif // DEBUG
-                    throw exception((boost::format("error reading input argument `i+1` (`p.name`): expected array (simGetStackTableInfo(stack, 0) returned %d)") % i).str());
+                    throw exception((boost::format("expected array (simGetStackTableInfo(stack, 0) returned %d)") % i).str());
                 }
                 int oldsz = simGetStackSizeE(p->stackID);
                 simUnfoldStackTableE(p->stackID);
@@ -970,15 +970,15 @@ void `cmd.name`_callback(SScriptCallBack *p)
 
 #py if p.minsize > 0 and p.minsize == p.maxsize:
                 if(in_args.`p.name`.size() != `p.minsize`)
-                    throw exception("argument `i+1` (`p.name`) array must have exactly `p.minsize` elements");
+                    throw exception("must have exactly `p.minsize` elements");
 #py else:
 #py if p.minsize > 0:
                 if(in_args.`p.name`.size() < `p.minsize`)
-                    throw exception("argument `i+1` (`p.name`) array must have at least `p.minsize` elements");
+                    throw exception("must have at least `p.minsize` elements");
 #py endif
 #py if p.maxsize is not None:
                 if(in_args.`p.name`.size() > `p.maxsize`)
-                    throw exception("argument `i+1` (`p.name`) array must have at most `p.maxsize` elements");
+                    throw exception("must have at most `p.maxsize` elements");
 #py endif
 #py endif
 #py else:
