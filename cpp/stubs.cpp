@@ -516,6 +516,9 @@ void read__`struct.name`(int stack, `struct.name` *value)
 #py for field in struct.fields:
                 else if(strcmp(str, "`field.name`") == 0)
                 {
+                    if(isDebugStubsEnabled())
+                        std::cout << "DEBUG_STUBS: reading field \"`field.name`\"..." << std::endl;
+
                     try
                     {
 #py if isinstance(field, model.ParamTable):
@@ -621,6 +624,9 @@ void write__`struct.name`(`struct.name` *value, int stack)
 #py for field in struct.fields:
         try
         {
+            if(isDebugStubsEnabled())
+                std::cout << "DEBUG_STUBS: writing field \"`field.name`\"..." << std::endl;
+
             simPushStringOntoStackE(stack, "`field.name`", 0);
 #py if isinstance(field, model.ParamTable):
             // write field '`field.name`' of type array of `field.ctype()`
@@ -834,7 +840,7 @@ void `cmd.name`_callback(SScriptCallBack *p)
 
         int numArgs = simGetStackSizeE(p->stackID);
         if(numArgs < `cmd.params_min`)
-            throw exception("too few arguments");
+            throw exception("not enough arguments");
         if(numArgs > `cmd.params_max`)
             throw exception("too many arguments");
 
@@ -843,6 +849,9 @@ void `cmd.name`_callback(SScriptCallBack *p)
 #py for i, p in enumerate(cmd.params):
         if(numArgs >= `i+1`)
         {
+            if(isDebugStubsEnabled())
+                std::cout << "DEBUG_STUBS: reading input argument `i+1` (`p.name`)..." << std::endl;
+
             try
             {
 #py if isinstance(p, model.ParamTable):
@@ -971,6 +980,9 @@ void `cmd.name`_callback(SScriptCallBack *p)
 #py for i, p in enumerate(cmd.returns):
         try
         {
+            if(isDebugStubsEnabled())
+                std::cout << "DEBUG_STUBS: writing output argument `i+1` (`p.name`)..." << std::endl;
+
 #py if isinstance(p, model.ParamTable):
             // write output argument `i+1` (`p.name`) of type array of `p.ctype()`
             simPushTableOntoStackE(p->stackID);
