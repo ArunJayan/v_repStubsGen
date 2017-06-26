@@ -1,4 +1,4 @@
-from lxml import etree
+import xml.etree.ElementTree as ET
 from sys import argv, exit
 
 if len(argv) != 4:
@@ -6,7 +6,7 @@ if len(argv) != 4:
     exit(1)
 
 with open(argv[1], 'r') as f1, open(argv[2], 'r') as f2, open(argv[3], 'w') as f3:
-    tree = map(etree.parse, (f1, f2))
+    tree = map(ET.parse, (f1, f2))
     root = map(lambda tree: tree.getroot(), tree)
     for e in root[1]:
         root[0].append(e)
