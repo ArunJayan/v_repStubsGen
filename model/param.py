@@ -129,7 +129,7 @@ class ParamTable(Param):
     def cdefault(self):
         if self.default is not None:
             d = self.default
-            d = 'boost::assign::list_of' + ''.join(map(lambda x: '(%s)' % x.strip(), d.strip()[1:-1].split(',')))
+            d = 'boost::assign::list_of{}.convert_to_container<{} >()'.format(''.join(map(lambda x: '(%s)' % x.strip(), d.strip()[1:-1].split(','))), self.ctype())
             return d
 
 class ParamStruct(Param):
