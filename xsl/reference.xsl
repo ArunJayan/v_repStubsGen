@@ -82,7 +82,7 @@
 
     <xsl:template name="renderCmdRef">
         <xsl:param name="name"/>
-        <a href="#cmd:{$name}"><xsl:call-template name="renderCmdName"><xsl:with-param name="name" select="$name"/></xsl:call-template></a>
+        <a href="#{$name}"><xsl:call-template name="renderCmdName"><xsl:with-param name="name" select="$name"/></xsl:call-template></a>
     </xsl:template>
 
     <xsl:template name="renderParamsSynopsis">
@@ -254,7 +254,7 @@
                                 <xsl:for-each select="plugin/command">
                                     <xsl:sort select="@name"/>
                                     <xsl:if test="description != ''">
-                                        <h3 class="subsectionBar"><a name="cmd:{@name}" id="cmd:{@name}"></a><xsl:call-template name="renderCmdName"><xsl:with-param name="name" select="@name"/></xsl:call-template></h3>
+                                        <h3 class="subsectionBar"><a name="{@name}" id="{@name}"></a><xsl:call-template name="renderCmdName"><xsl:with-param name="name" select="@name"/></xsl:call-template></h3>
                                         <table class="apiTable">
                                             <tr class="apiTableTr">
                                                 <td class="apiTableLeftDescr">
