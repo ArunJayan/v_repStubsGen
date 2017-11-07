@@ -7,7 +7,7 @@ functions, and enums, and it produces a pair of C++ source/header files.
 ## Dependencies
 
 - Python interpreter (2.7 or greater)
-- xsltproc program in your PATH (an XSLT processor) if you want to generate documentation (windows binary available [here](https://github.com/fferri/xsltproc-win/raw/master/xsltproc-win.zip))
+- xsltproc program in your PATH (an XSLT processor) if you want to generate documentation (windows binary available [here](https://github.com/CoppeliaRobotics/xsltproc-win/raw/master/xsltproc-win.zip))
 
 ## Usage
 
@@ -145,5 +145,5 @@ It will generate an enum named `myenum` with items `sim_plugname_foo_alpha`, `si
 
 ## Complete example
 
-See [v_repExtPluginSkeletonNG](https://github.com/fferri/v_repExtPluginSkeletonNG) for an example of a V-REP plugin using this framework.
+See [v_repExtPluginSkeletonNG](https://github.com/CoppeliaRobotics/v_repExtPluginSkeletonNG) for an example of a V-REP plugin using this framework.
 
