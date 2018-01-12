@@ -45,15 +45,15 @@
     </xsl:template>
 
     <xsl:template match="ul">
-        <strong><xsl:apply-templates select="node()"/></strong>
+        <ul><xsl:apply-templates select="node()"/></ul>
     </xsl:template>
 
     <xsl:template match="ol">
-        <strong><xsl:apply-templates select="node()"/></strong>
+        <ol><xsl:apply-templates select="node()"/></ol>
     </xsl:template>
 
     <xsl:template match="li">
-        <strong><xsl:apply-templates select="node()"/></strong>
+        <li><xsl:apply-templates select="node()"/></li>
     </xsl:template>
 
     <!-- template routines: -->
