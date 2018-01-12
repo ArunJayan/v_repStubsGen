@@ -44,6 +44,18 @@
         <strong><xsl:apply-templates select="node()"/></strong>
     </xsl:template>
 
+    <xsl:template match="ul">
+        <strong><xsl:apply-templates select="node()"/></strong>
+    </xsl:template>
+
+    <xsl:template match="ol">
+        <strong><xsl:apply-templates select="node()"/></strong>
+    </xsl:template>
+
+    <xsl:template match="li">
+        <strong><xsl:apply-templates select="node()"/></strong>
+    </xsl:template>
+
     <!-- template routines: -->
 
     <xsl:template name="functionPrefixOldStyle">
