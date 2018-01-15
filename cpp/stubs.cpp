@@ -795,6 +795,8 @@ bool registerScriptStuff()
 #py endfor
 #py endfor
 #py endif
+
+#include "lua_calltips.cpp"
         }
         CATCH_AND_RETHROW("Initialization failed (registerScriptStuff): ")
     }
