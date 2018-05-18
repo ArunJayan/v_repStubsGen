@@ -739,23 +739,6 @@ bool registerScriptStuff()
             simRegisterScriptVariableE("sim`plugin.short_name`", "{}", 0);
             simRegisterScriptVariableE("sim`plugin.short_name`", "require('simExt`plugin.name`')", 0);
 #py endif
-#py if plugin.short_name:
-            simRegisterScriptVariableE("sim`plugin.short_name`.reportedDeprecatedFunctionNames", "{}", -1);
-            simRegisterScriptVariableE("sim`plugin.short_name`.reportDeprecatedFunction",
-                    "function(oldName,newName)\n"
-                    "    if sim`plugin.short_name`.reportedDeprecatedFunctionNames[oldName]~=nil then return end\n"
-                    "    msg='WARNING: %s is deprecated, please use %s.'\n"
-                    //"    simAddStatusbarMessage(string.format(msg, oldName, newName))\n"
-                    "    sim`plugin.short_name`.reportedDeprecatedFunctionNames[oldName]=true\n"
-                    "end", -1);
-            simRegisterScriptVariableE("sim`plugin.short_name`.deprecated",
-                    "function(oldName,newName,f)\n"
-                    "    return function(...)\n"
-                    "        sim`plugin.short_name`.reportDeprecatedFunction(oldName,newName)\n"
-                    "        return f(...)\n"
-                    "    end\n"
-                    "end", -1);
-#py endif
 
 #py if plugin.short_name:
             // register new-style short-version varables
@@ -772,10 +755,9 @@ bool registerScriptStuff()
 #py endif
 
 #py if plugin.short_name:
-            // commands simExt<PLUGIN_NAME>_<COMMAND_NAME> (depreated)
+            // commands simExt<PLUGIN_NAME>_<COMMAND_NAME> (deprecated)
 #py for cmd in plugin.commands:
-            simRegisterScriptVariableE("`plugin.command_prefix``cmd.name`", "sim`plugin.short_name`.deprecated('`plugin.command_prefix``cmd.name`','sim`plugin.short_name`.`cmd.name`',sim`plugin.short_name`.`cmd.name`)", -1);
-            simRegisterScriptCallbackFunctionE("`plugin.command_prefix``cmd.name`@`plugin.name`", "`cmd.help_text`\n\n(DEPRECATED, please use sim`plugin.short_name`.`cmd.name`)", 0);
+            simRegisterScriptCallbackFunctionE("`plugin.command_prefix``cmd.name`@`plugin.name`", "`cmd.help_text`\n\n(DEPRECATED, please use sim`plugin.short_name`.`cmd.name`)", `cmd.name`_callback);
 #py endfor
             // register variables (deprecated)
 #py for enum in plugin.enums:
