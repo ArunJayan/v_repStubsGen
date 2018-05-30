@@ -16,6 +16,7 @@
 #include <vector>
 #include <boost/assign/list_of.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 
 struct exception : public std::exception
 {
@@ -78,6 +79,11 @@ void read__int(int stack, int *value);
 void read__float(int stack, float *value);
 void read__double(int stack, double *value);
 void read__std__string(int stack, std::string *value);
+void read__boost__optional__bool__(int stack, boost::optional<bool> *value);
+void read__boost__optional__int__(int stack, boost::optional<int> *value);
+void read__boost__optional__float__(int stack, boost::optional<float> *value);
+void read__boost__optional__double__(int stack, boost::optional<double> *value);
+void read__boost__optional__std__string__(int stack, boost::optional<std::string> *value);
 #py for struct in plugin.structs:
 void read__`struct.name`(int stack, `struct.name` *value);
 #py endfor
@@ -86,6 +92,11 @@ void write__int(int value, int stack);
 void write__float(float value, int stack);
 void write__double(double value, int stack);
 void write__std__string(std::string value, int stack);
+void write__boost__optional__bool__(boost::optional<bool> value, int stack);
+void write__boost__optional__int__(boost::optional<int> value, int stack);
+void write__boost__optional__float__(boost::optional<float> value, int stack);
+void write__boost__optional__double__(boost::optional<double> value, int stack);
+void write__boost__optional__std__string__(boost::optional<std::string> value, int stack);
 #py for struct in plugin.structs:
 void write__`struct.name`(`struct.name` *value, int stack);
 #py endfor

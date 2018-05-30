@@ -11,10 +11,14 @@ class Param(object):
         except AttributeError:
             self.description = ''
         self.dtype = node.attrib['type']
+        self.ctype_base = self.dtype
         self.default = node.attrib.get('default', None)
         self.skip = node.attrib.get('skip', 'false').lower() in ('true', 'yes', '1')
+        self.nullable = node.attrib.get('nullable', 'false').lower() in ('true', 'yes', '1')
         self.write_in = True
         self.write_out = True
+        if self.dtype == 'table' and self.nullable:
+            raise ValueError('cannot have nullable table')
 
     def mandatory(self):
         return self.default is None
@@ -23,10 +27,20 @@ class Param(object):
         return self.default is not None
 
     def ctype(self):
-        return self.dtype
+        if self.nullable: return 'boost::optional<%s>' % self.ctype_base
+        else: return self.ctype_base
 
     def ctype_normalized(self):
-        return self.ctype().replace('::', '__')
+        replacements = {
+            '::': '__',
+            '<': '__',
+            '>': '__',
+            ' ': '',
+        }
+        ret = self.ctype()
+        for a, b in replacements.items():
+            ret = ret.replace(a, b)
+        return ret
 
     def htype(self):
         return self.dtype
@@ -81,13 +95,11 @@ class ParamDouble(Param):
 class ParamString(Param):
     def __init__(self, node):
         super(ParamString, self).__init__(node)
+        self.ctype_base = 'std::string'
 
     def cdefault(self):
         if self.default is None: return None
         return '"%s"' % self.default.replace('\\','\\\\').replace('"','\\"')
-
-    def ctype(self):
-        return 'std::string'
 
     def hdefault(self):
         if self.default is None: return None

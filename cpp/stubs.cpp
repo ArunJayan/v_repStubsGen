@@ -521,6 +521,98 @@ void read__std__string(int stack, std::string *value)
     }
 }
 
+void read__boost__optional__bool__(int stack, boost::optional<bool> *value)
+{
+    simBool v;
+    if(simGetStackBoolValueE(stack, &v) == 1)
+    {
+        *value = v;
+        simPopStackItemE(stack, 1);
+    }
+    else if(simIsStackValueNull(stack) == 1)
+    {
+        *value = boost::none;
+    }
+    else
+    {
+        throw exception("expected bool or nil");
+    }
+}
+
+void read__boost__optional__int__(int stack, boost::optional<int> *value)
+{
+    int v;
+    if(simGetStackInt32ValueE(stack, &v) == 1)
+    {
+        *value = v;
+        simPopStackItemE(stack, 1);
+    }
+    else if(simIsStackValueNull(stack) == 1)
+    {
+        *value = boost::none;
+    }
+    else
+    {
+        throw exception("expected int or nil");
+    }
+}
+
+void read__boost__optional__float__(int stack, boost::optional<float> *value)
+{
+    simFloat v;
+    if(simGetStackFloatValueE(stack, &v) == 1)
+    {
+        *value = v;
+        simPopStackItemE(stack, 1);
+    }
+    else if(simIsStackValueNull(stack) == 1)
+    {
+        *value = boost::none;
+    }
+    else
+    {
+        throw exception("expected float or nil");
+    }
+}
+
+void read__boost__optional__double__(int stack, boost::optional<double> *value)
+{
+    simDouble v;
+    if(simGetStackDoubleValueE(stack, &v) == 1)
+    {
+        *value = v;
+        simPopStackItemE(stack, 1);
+    }
+    else if(simIsStackValueNull(stack) == 1)
+    {
+        *value = boost::none;
+    }
+    else
+    {
+        throw exception("expected double or nil");
+    }
+}
+
+void read__boost__optional__std__string__(int stack, boost::optional<std::string> *value)
+{
+    simChar *str;
+    simInt strSize;
+    if((str = simGetStackStringValueE(stack, &strSize)) != NULL && strSize >= 0)
+    {
+        *value = std::string(str, strSize);
+        simPopStackItemE(stack, 1);
+        simReleaseBufferE(str);
+    }
+    else if(simIsStackValueNull(stack) == 1)
+    {
+        *value = boost::none;
+    }
+    else
+    {
+        throw exception("expected string or nil");
+    }
+}
+
 #py for struct in plugin.structs:
 void read__`struct.name`(int stack, `struct.name` *value)
 {
@@ -660,6 +752,57 @@ void write__std__string(std::string value, int stack)
 {
     const simChar *v = value.c_str();
     simPushStringOntoStackE(stack, v, value.length());
+}
+
+void write__boost__optional__bool__(boost::optional<bool> value, int stack)
+{
+    if(value)
+    {
+        simBool v = value.get();
+        simPushBoolOntoStackE(stack, v);
+    }
+    else simPushNullOntoStack(stack);
+}
+
+void write__boost__optional__int__(boost::optional<int> value, int stack)
+{
+    if(value)
+    {
+        simInt v = value.get();
+        simPushInt32OntoStackE(stack, v);
+    }
+    else simPushNullOntoStack(stack);
+}
+
+void write__boost__optional__float__(boost::optional<float> value, int stack)
+{
+    if(value)
+    {
+        simFloat v = value.get();
+        simPushFloatOntoStackE(stack, v);
+    }
+    else simPushNullOntoStack(stack);
+}
+
+void write__boost__optional__double__(boost::optional<double> value, int stack)
+{
+    if(value)
+    {
+        simDouble v = value.get();
+        simPushDoubleOntoStackE(stack, v);
+    }
+    else simPushNullOntoStack(stack);
+}
+
+void write__boost__optional__std__string__(boost::optional<std::string> value, int stack)
+{
+    if(value)
+    {
+        std::string s = value.get();
+        const simChar *v = s.c_str();
+        simPushStringOntoStackE(stack, v, s.length());
+    }
+    else simPushNullOntoStack(stack);
 }
 
 #py for struct in plugin.structs:
