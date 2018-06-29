@@ -6,5 +6,8 @@ class Enum(object):
         self.name = node.attrib['name']
         self.item_prefix = node.attrib.get('item-prefix', '')
         self.base = int(node.attrib.get('base', 0))
-        self.items = [n.attrib['name'] for n in node.findall('item')]
+        self.items = [type('', (), {
+                'name': n.attrib['name'],
+                'value': n.attrib.get('value', self.base + i)
+            }) for i, n in enumerate(node.findall('item'))]
 

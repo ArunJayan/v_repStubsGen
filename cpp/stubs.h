@@ -107,9 +107,9 @@ bool registerScriptStuff();
 enum `enum.name`
 {
 #py for i, item in enumerate(enum.items):
-    sim_`plugin.name.lower()`_`enum.item_prefix``item` = `enum.base + i`,
+    sim_`plugin.name.lower()`_`enum.item_prefix``item.name` = `item.value`,
 #py if plugin.short_name and plugin.name.lower() != plugin.short_name.lower():
-    sim_`plugin.short_name.lower()`_`enum.item_prefix``item` = `enum.base + i`,
+    sim_`plugin.short_name.lower()`_`enum.item_prefix``item.name` = `item.value`,
 #py endif
 #py endfor
 };

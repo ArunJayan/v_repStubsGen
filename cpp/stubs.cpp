@@ -888,7 +888,7 @@ bool registerScriptStuff()
 #py for enum in plugin.enums:
             simRegisterScriptVariableE("sim`plugin.short_name`.`enum.name`", "{}", 0);
 #py for item in enum.items:
-            simRegisterScriptVariableE("sim`plugin.short_name`.`enum.name`.`item`", (boost::lexical_cast<std::string>(sim_`plugin.short_name.lower()`_`enum.item_prefix``item`)).c_str(), 0);
+            simRegisterScriptVariableE("sim`plugin.short_name`.`enum.name`.`item.name`", (boost::lexical_cast<std::string>(sim_`plugin.short_name.lower()`_`enum.item_prefix``item.name`)).c_str(), 0);
 #py endfor
 #py endfor
             // register new-style short-version commands
@@ -905,7 +905,7 @@ bool registerScriptStuff()
             // register variables (deprecated)
 #py for enum in plugin.enums:
 #py for item in enum.items:
-            simRegisterScriptVariableE("sim_`plugin.name.lower()`_`enum.item_prefix``item`", (boost::lexical_cast<std::string>(sim_`plugin.name.lower()`_`enum.item_prefix``item`)).c_str(), -1);
+            simRegisterScriptVariableE("sim_`plugin.name.lower()`_`enum.item_prefix``item.name`", (boost::lexical_cast<std::string>(sim_`plugin.name.lower()`_`enum.item_prefix``item.name`)).c_str(), -1);
 #py endfor
 #py endfor
 #py else:
@@ -916,7 +916,7 @@ bool registerScriptStuff()
             // register variables
 #py for enum in plugin.enums:
 #py for item in enum.items:
-            simRegisterScriptVariableE("sim_`plugin.name.lower()`_`enum.item_prefix``item`", (boost::lexical_cast<std::string>(sim_`plugin.name.lower()`_`enum.item_prefix``item`)).c_str(), 0);
+            simRegisterScriptVariableE("sim_`plugin.name.lower()`_`enum.item_prefix``item.name`", (boost::lexical_cast<std::string>(sim_`plugin.name.lower()`_`enum.item_prefix``item.name`)).c_str(), 0);
 #py endfor
 #py endfor
 #py endif
@@ -939,7 +939,7 @@ const char* `enum.name.lower()`_string(`enum.name` x)
     switch(x)
     {
 #py for item in enum.items:
-        case sim_`plugin.name.lower()`_`enum.item_prefix``item`: return "sim_`plugin.name.lower()`_`enum.item_prefix``item`";
+        case sim_`plugin.name.lower()`_`enum.item_prefix``item.name`: return "sim_`plugin.name.lower()`_`enum.item_prefix``item.name`";
 #py endfor
         default: return "???";
     }

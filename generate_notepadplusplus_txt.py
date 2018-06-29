@@ -25,7 +25,7 @@ with open(argv[2], 'w') as ftxt:
                 prefix = 'sim{}.{}.'.format(plugin.short_name, enum.name)
             else:
                 prefix = enum.item_prefix
-            variables.append(prefix+item)
+            variables.append(prefix+item.name)
 
     ftxt.write('{}\n\n{}\n'.format(' '.join(functions), ' '.join(variables)))
 
