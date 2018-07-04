@@ -17,20 +17,34 @@ with open(outfile, 'w') as fout:
     def output():
         if fun:
             f, fdesc = fun
-            calltip = (','.join(x[0] for x in rets)+('=' if rets else '')+'sim'+shortPlugName+'.'+f+'('+','.join(x[0] for x in args)+')')
+            calltip = (','.join(x[0]+' '+x[1] for x in rets)+('=' if rets else '')+'sim'+shortPlugName+'.'+f+'('+','.join(x[0]+' '+x[1] for x in args)+')')
             if fdesc:
                 calltip += '\\n\\n' + fdesc
             while calltip[-2:] == '\\n': calltip = calltip[:-2]
             fout.write('simRegisterScriptCallbackFunctionE("sim{}.{}@{}", "{}", NULL);\n'.format(shortPlugName, f, longPlugName, calltip))
 
     with open(luafile, 'r') as f:
-        for line in f:
-            m = re.match(r'\s*--\s*@([^\s]+)\s+([^\s]+)(.*)$', line)
-            if m:
-                key, value, desc = map(lambda s: s.strip(), m.groups())
-                if key == 'fun': fun = (value, desc)
-                elif key == 'arg': args.append((value, desc))
-                elif key == 'ret': rets.append((value, desc))
+        for lineno, line in enumerate(f):
+            lineno += 1
+            m1 = re.match(r'\s*--\s*@(\w+)\b(.*)$', line)
+            if m1:
+                key = m1.group(1)
+                rest = m1.group(2).strip()
+                if key == 'fun':
+                    m2 = re.match(r'(\w+)(|\s+.*)$', rest)
+                    if m2:
+                        fun = (m2.group(1), m2.group(2))
+                    else:
+                        print('%s:%d: bad arguments. must be: @fun <funcName> [description]' % (luafile, lineno))
+                        exit(2)
+                elif key in ('arg', 'ret'):
+                    m2 = re.match(r'(\w+)\s+(\w+)\s+(.*)$', rest)
+                    if m2:
+                        item = (m2.group(1), m2.group(2), m2.group(3))
+                        (rets if key == 'ret' else args).append(item)
+                    else:
+                        print('%s:%d: bad arguments. must be: @%s <type> <name> <description>' % (luafile, lineno, key))
+                        exit(2)
             else:
                 output()
                 fun = None
