@@ -167,6 +167,7 @@ class ParamStruct(Param):
     def argmod(self):
         return '&'
 
+Param.register_type('anything', Param)
 Param.register_type('int', ParamInt)
 Param.register_type('float', ParamFloat)
 Param.register_type('double', ParamDouble)

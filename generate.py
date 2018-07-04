@@ -21,10 +21,16 @@ parser.add_argument("--gen-lua-calltips", help='generate C++ code for Lua callti
 parser.add_argument("--gen-notepadplusplus-stuff", help='generate syntax hilighting stuff for notepad++', action='store_true')
 parser.add_argument("--gen-deprecated-txt", help='generate deprecated functions mapping for V-REP', action='store_true')
 parser.add_argument("--gen-all", help='generate everything', action='store_true')
+parser.add_argument("--verbose", help='print commands being executed', action='store_true')
 args = parser.parse_args()
 
 if args is False:
     SystemExit
+
+args.verbose = True
+
+if args.verbose:
+    print(' '.join(['"%s"' % arg if ' ' in arg else arg for arg in sys.argv]))
 
 self_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -34,25 +40,23 @@ def output(filename):
 def rel(filename):
     return os.path.join(self_dir, filename)
 
-def runsubprocess(what, args):
-    print(' '.join(['"%s"' % arg if ' ' in arg else arg for arg in args]))
-    child = subprocess.Popen(args)
+def runsubprocess(what, cmdargs):
+    if args.verbose:
+        print(' '.join(['"%s"' % arg if ' ' in arg else arg for arg in cmdargs]))
+    child = subprocess.Popen(cmdargs)
     child.communicate()
     if child.returncode != 0:
         print('failed to run %s' % what)
         sys.exit(1)
 
-def runtool(what, *args):
-    runsubprocess(what, ['python', rel(what + '.py')] + list(args))
+def runtool(what, *cmdargs):
+    runsubprocess(what, ['python', rel(what + '.py')] + list(cmdargs))
 
-def runprogram(what, *args):
-    runsubprocess(what, [what] + list(args))
+def runprogram(what, *cmdargs):
+    runsubprocess(what, [what] + list(cmdargs))
 
 # check dependencies & inputs:
 input_xml = args.xml_file
-if args.gen_reference_xml:
-    input_xml = output('reference.xml')
-    args.gen_lua_xml = True
 if args.gen_all:
     args.gen_stubs = True
     args.gen_lua_xml = True
@@ -61,8 +65,11 @@ if args.gen_all:
     args.gen_lua_calltips = True
     args.gen_notepadplusplus_stuff = True
     args.gen_deprecated_txt = True
+if args.gen_reference_xml:
+    input_xml = output('reference.xml')
+    args.gen_lua_xml = True
 
-# create output dir fi needed:
+# create output dir if needed:
 try:
     os.makedirs(args.output_dir)
 except OSError as exc:
