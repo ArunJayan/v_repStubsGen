@@ -35,6 +35,7 @@ def rel(filename):
     return os.path.join(self_dir, filename)
 
 def runsubprocess(what, args):
+    print(' '.join(['"%s"' % arg if ' ' in arg else arg for arg in args]))
     child = subprocess.Popen(args)
     child.communicate()
     if child.returncode != 0:
@@ -42,11 +43,9 @@ def runsubprocess(what, args):
         sys.exit(1)
 
 def runtool(what, *args):
-    print('running %s' % what)
     runsubprocess(what, ['python', rel(what + '.py')] + list(args))
 
 def runprogram(what, *args):
-    print('running %s' % what)
     runsubprocess(what, [what] + list(args))
 
 # check dependencies & inputs:
